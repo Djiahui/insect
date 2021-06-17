@@ -2,12 +2,13 @@ import entity
 import numpy as np
 import nds
 import matplotlib.pyplot as plt
+import simulator
 
 
-def main():
-	insect_num = 10
-	pop_num = 10
-	env = entity.screen(100, 100,10)
+def main(x,y,step,insect_num,sample_num,insect_iteration):
+	env = entity.screen(x, y, step)
+	pops = entity.insect_population(insect_num, env)
+	simulator.sample_generate(sample_num,env,pops,insect_iteration)
 
 
 	population = entity.populations(pop_num,env,entity.insect_population(insect_num,env))
@@ -40,4 +41,10 @@ def draw(population):
 
 
 if __name__ == '__main__':
-	main()
+	x = 100
+	y = 100
+	step = 10
+	insect_num = 100
+	sample_num = 100
+	insect_iteration = 10
+	main(x,y,step,insect_num,sample_num,insect_iteration)
