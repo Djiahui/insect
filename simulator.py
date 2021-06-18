@@ -2,21 +2,23 @@ import numpy as np
 import entity
 import matplotlib.pyplot as plt
 import copy
+from tqdm import tqdm
+
+import pickle
 
 
-
-def draw(pops,traps,i):
+def draw(pops,traps):
     poses = list(map(lambda x:x.pos,pops.populations))
     poses = np.vstack(poses)
 
     trap_pos = list(map(lambda x:x.pos,traps))
     trap_pos = np.vstack(trap_pos)
     plt.scatter(poses[:,0],poses[:,1])
-    plt.scatter(trap_pos[:,0],trap_pos[:,1],s=5000,c='r',alpha=0.5)
-    plt.title(str(i))
+    plt.scatter(trap_pos[:,0],trap_pos[:,1],s=2000,c='r',alpha=0.5)
+    # plt.title(str(i))
+    plt.grid()
     plt.xticks(np.arange(0,100,10))
     plt.yticks(np.arange(0,100,10))
-    plt.grid()
     plt.show()
 
 
@@ -39,10 +41,10 @@ def simulate(matrix,iteration,pops):
 
     for i in range(iteration):
         pops.update(traps)
-        print(pops.global_best.fitness)
-        draw(pops,traps,i)
+        # print(pops.global_best.fitness)
+    draw(pops,traps)
 
-    return sum(pops.env.food)
+    return pops.env.food.sum()
 
 
 def matrix_generate(x, y, step):
@@ -51,12 +53,32 @@ def matrix_generate(x, y, step):
 
     matrix = [[0]*y_num for _ in range(x_num)]
 
-    for i in range(x_num):
-        for j in range(y_num):
-            r1 = np.random.rand()
-            r2 = np.random.rand()
-            if r2<r1:
-                matrix[i][j] = 1
+    temp = np.random.rand()
+    if temp<0.25:
+        for i in range(x_num):
+            for j in range(y_num):
+                r1 = np.random.rand()
+                if r1<0.1:
+                    matrix[i][j] = 1
+    elif 0.25<temp<0.5:
+        for i in range(x_num):
+            for j in range(y_num):
+                r1 = np.random.rand()
+                if r1<0.2:
+                    matrix[i][j] = 1
+    elif 0.5<temp<0.75:
+        for i in range(x_num):
+            for j in range(y_num):
+                r1 = np.random.rand()
+                if r1<0.25:
+                    matrix[i][j] = 1
+    else:
+        for i in range(x_num):
+            for j in range(y_num):
+                r1 = np.random.rand()
+                r2 = np.random.rand()
+                if r2 < r1:
+                    matrix[i][j] = 1
     return matrix
 
 
@@ -65,16 +87,22 @@ def matrix_generate(x, y, step):
 def sample_generate(sample_num,env,pops,insect_iteration):
     data = {}
 
-    for _ in range(sample_num):
+    # for _ in range(sample_num):
+    for _ in tqdm(range(sample_num)):
         matrix = matrix_generate(env.x,env.y,env.step)
         new_pops = copy.deepcopy(pops)
         food_rest = simulate(matrix,insect_iteration,new_pops)
-        food_loss = (sum(pops.env.food)-food_rest)/sum(pops.env.food)
+        food_loss = (pops.env.food.sum()-food_rest)/pops.env.food.sum()
 
         n = len(data)
         data[n] = {}
         data[n]['sample'] = matrix
         data[n]['label'] = food_loss
+
+    # Todo attention !
+    exit()
+    with open('data.pkl','wb') as pkl:
+        pickle.dump(data,pkl)
 
     return data
 
@@ -85,7 +113,10 @@ def sample_generate(sample_num,env,pops,insect_iteration):
 
 
 
+
+
 if __name__ == '__main__':
+
     pass
 
 

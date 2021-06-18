@@ -24,7 +24,7 @@ class insect(object):
 		self.fitness = None
 		self.status = True
 
-		self.eat_num = 0.05
+		self.eat_num = 0.5
 
 	def update(self, global_best, env):
 
@@ -39,13 +39,15 @@ class insect(object):
 
 		if self.pos[0] < 0:
 			self.pos[0] = -self.pos[0]
-		if self.pos[0] > env.length:
-			self.pos[0] = 2 * env.length - self.pos[0]
+		if self.pos[0] > env.x:
+			self.pos[0] = 2 * env.x - self.pos[0]
 
 		if self.pos[1] < 0:
 			self.pos[1] = -self.pos[1]
-		if self.pos[1] > env.width:
-			self.pos[1] = 2 * env.width - self.pos[1]
+		if self.pos[1] > env.y:
+			self.pos[1] = 2 * env.y - self.pos[1]
+
+		# Todo 应该先判断死活在看吃粮与否
 
 		self.fitness = env.eva(self.pos,self.eat_num)
 		if self.fitness > self.best_fit:
@@ -108,11 +110,10 @@ class insect_population(object):
 		for temp in self.populations:
 			temp.update(self.global_best, self.env)
 			temp.living_test(traps)
-			if not temp.status:
-				print('one')
-				continue
-			if temp.fitness > self.global_best.fitness:
-				self.global_best = temp
+			# if not temp.status:
+			# 	print('one')
+			# 	continue
+		self.global_best = sorted(self.populations,key=lambda x:x.fitness,reverse=True)[0]
 
 		# add a function to generate new population
 
@@ -120,9 +121,9 @@ class insect_population(object):
 		self.populations = list(filter(lambda x:x.status,self.populations))
 		short_num = self.insect_num-len(self.populations)
 		self.dead_num += short_num
-		print(len(self.populations))
+		# print(len(self.populations))
 		self.generate(traps,short_num)
-		print(len(self.populations))
+		# print(len(self.populations))
 
 
 class screen(object):
@@ -144,9 +145,7 @@ class screen(object):
 		y_coor = int(pos[1]//self.step)
 
 		if self.food[x_coor,y_coor]>=eat_num:
-			print(self.food[x_coor,y_coor])
 			self.food[x_coor,y_coor] = self.food[x_coor,y_coor]-eat_num
-			print(self.food[x_coor, y_coor])
 
 		else:
 			self.food[x_coor,y_coor] = 0

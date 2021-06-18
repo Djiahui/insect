@@ -9,6 +9,7 @@ def main(x,y,step,insect_num,sample_num,insect_iteration):
 	env = entity.screen(x, y, step)
 	pops = entity.insect_population(insect_num, env)
 	simulator.sample_generate(sample_num,env,pops,insect_iteration)
+	exit()
 
 
 	population = entity.populations(pop_num,env,entity.insect_population(insect_num,env))
@@ -44,7 +45,7 @@ if __name__ == '__main__':
 	x = 100
 	y = 100
 	step = 10
-	insect_num = 100
-	sample_num = 100
-	insect_iteration = 10
+	insect_num = 1000
+	sample_num = 10
+	insect_iteration = 50
 	main(x,y,step,insect_num,sample_num,insect_iteration)
