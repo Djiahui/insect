@@ -42,7 +42,7 @@ def simulate(matrix,iteration,pops):
     for i in range(iteration):
         pops.update(traps)
         # print(pops.global_best.fitness)
-    draw(pops,traps)
+    # draw(pops,traps)
 
     return pops.env.food.sum()
 
@@ -85,10 +85,13 @@ def matrix_generate(x, y, step):
 
 
 def sample_generate(sample_num,env,pops,insect_iteration):
-    data = {}
+
 
     # for _ in range(sample_num):
     for _ in tqdm(range(sample_num)):
+        with open('data.pkl','rb') as pkl1:
+            data = pickle.load(pkl1)
+
         matrix = matrix_generate(env.x,env.y,env.step)
         new_pops = copy.deepcopy(pops)
         food_rest = simulate(matrix,insect_iteration,new_pops)
