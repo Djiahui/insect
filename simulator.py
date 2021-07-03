@@ -99,10 +99,14 @@ def sample_generate(sample_num,env,pops,insect_iteration):
         data[n]['sample'] = matrix
         data[n]['label'] = food_loss
 
+        with open('data.pkl', 'wb') as pkl:
+            pickle.dump(data, pkl)
+
     # Todo attention !
-    exit()
-    with open('data.pkl','wb') as pkl:
-        pickle.dump(data,pkl)
+    # exit()
+
+
+
 
     return data
 
@@ -116,9 +120,6 @@ def sample_generate(sample_num,env,pops,insect_iteration):
 
 
 if __name__ == '__main__':
-
-    pass
-
 
     pop_num = 100
     trap_num = 5

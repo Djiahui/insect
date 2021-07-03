@@ -26,7 +26,7 @@ class insect(object):
 
 		self.eat_num = 0.5
 
-	def update(self, global_best, env):
+	def update(self, global_best, env,traps):
 
 		temp1 = self.best_pos - self.pos
 		temp2 = global_best.pos - self.pos
@@ -47,7 +47,9 @@ class insect(object):
 		if self.pos[1] > env.y:
 			self.pos[1] = 2 * env.y - self.pos[1]
 
-		# Todo 应该先判断死活在看吃粮与否
+		self.living_test(traps)
+		if not self.status:
+			return
 
 		self.fitness = env.eva(self.pos,self.eat_num)
 		if self.fitness > self.best_fit:
@@ -108,8 +110,7 @@ class insect_population(object):
 
 	def update(self,traps):
 		for temp in self.populations:
-			temp.update(self.global_best, self.env)
-			temp.living_test(traps)
+			temp.update(self.global_best, self.env,traps)
 			# if not temp.status:
 			# 	print('one')
 			# 	continue
@@ -119,10 +120,10 @@ class insect_population(object):
 
 
 		self.populations = list(filter(lambda x:x.status,self.populations))
-		short_num = self.insect_num-len(self.populations)
-		self.dead_num += short_num
-		# print(len(self.populations))
-		self.generate(traps,short_num)
+		# short_num = self.insect_num-len(self.populations)
+		# self.dead_num += short_num
+		# # print(len(self.populations))
+		# self.generate(traps,short_num)
 		# print(len(self.populations))
 
 
@@ -138,7 +139,7 @@ class screen(object):
 		self.food_init()
 
 	def food_init(self):
-		self.food = 50+np.random.rand(self.x_num,self.y_num)*50
+		self.food = 100+np.random.rand(self.x_num,self.y_num)*50
 
 	def eva(self, pos,eat_num):
 		x_coor = int(pos[0]//self.step)
