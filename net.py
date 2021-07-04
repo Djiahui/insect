@@ -3,6 +3,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader,Dataset,random_split
 import pickle
 import matplotlib.pyplot as plt
+import os
+torch.manual_seed(1234)
 class dataset(Dataset):
 	def __init__(self):
 		with open('data.pkl','rb') as pkl:

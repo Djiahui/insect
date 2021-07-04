@@ -1,7 +1,7 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-with open('data.pkl','rb') as pkl:
+with open('data2.pkl','rb') as pkl:
 	data = pickle.load(pkl)
 
 new_data = []

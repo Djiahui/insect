@@ -1,3 +1,5 @@
+import pickle
+
 import entity
 import numpy as np
 import nds
@@ -42,8 +44,8 @@ def draw(population):
 
 
 if __name__ == '__main__':
-	x = 100
-	y = 100
+	x = 200
+	y = 200
 	step = 10
 	insect_num = 1000
 	sample_num = 1000

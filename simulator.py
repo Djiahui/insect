@@ -89,7 +89,7 @@ def sample_generate(sample_num,env,pops,insect_iteration):
 
     # for _ in range(sample_num):
     for _ in tqdm(range(sample_num)):
-        with open('data.pkl','rb') as pkl1:
+        with open('data2.pkl','rb') as pkl1:
             data = pickle.load(pkl1)
 
         matrix = matrix_generate(env.x,env.y,env.step)
@@ -102,7 +102,7 @@ def sample_generate(sample_num,env,pops,insect_iteration):
         data[n]['sample'] = matrix
         data[n]['label'] = food_loss
 
-        with open('data.pkl', 'wb') as pkl:
+        with open('data2.pkl', 'wb') as pkl:
             pickle.dump(data, pkl)
 
     # Todo attention !
