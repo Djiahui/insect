@@ -3,8 +3,10 @@ In this model, the number of insects to be generated
 is determined by current number and temperature. The 
 temperature is directly from data in that tex file.
 # predict model
-## the time of stay in one place
-## the food is increasing with a fixed speed
-## the machine
-## the movement of insect
-## the final loss
+仓库中机器的位置上粮食比较多，有一定几率虫子会被卷入到粮食中，其他位置的虫子不会（小概率）被卷入粮食中。是否被卷入到粮食中跟在某一个区域待得时间长短有关，成正相关。
+
+每一个位置上每一天粮食会有一个匀速的上升
+
+虫子的移动仍然跟粮食的数量有关,不和每只虫子的
+
+最终的损失和被抓走的虫子有关 

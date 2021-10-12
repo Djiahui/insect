@@ -1,12 +1,14 @@
 import numpy as np
 import copy
+import random
+
 
 class insect(object):
 	def __init__(self, pos=None, direction=None, rate=None):
 		if pos:
 			self.pos = pos
 		else:
-			self.pos = np.random.rand(2)*100
+			self.pos = np.random.rand(2) * 100
 
 		if direction:
 			self.direction = direction
@@ -26,7 +28,7 @@ class insect(object):
 
 		self.eat_num = 0.5
 
-	def update(self, global_best, env,traps):
+	def update(self, global_best, env, traps):
 
 		temp1 = self.best_pos - self.pos
 		temp2 = global_best.pos - self.pos
@@ -51,22 +53,26 @@ class insect(object):
 		if not self.status:
 			return
 
-		self.fitness = env.eva(self.pos,self.eat_num)
+		# Todo
+		# self.in_machine(env)
+		# if not self.status:
+		# 	return
+
+		self.fitness = env.eva(self.pos, self.eat_num)
 		if self.fitness > self.best_fit:
 			self.best_fit = self.fitness
 			self.best_pos = self.pos
 
-	def living_test(self,traps):
+	def living_test(self, traps):
 		for trap in traps:
-			dis = np.linalg.norm(self.pos-trap.pos,ord=2)
+			dis = np.linalg.norm(self.pos - trap.pos, ord=2)
 
-			if dis<trap.radius:
+			if dis < trap.radius:
 				self.status = False
 				break
 
-
-
-
+	def in_machine(self, env):
+		pass
 
 
 class trap(object):
@@ -84,15 +90,14 @@ class insect_population(object):
 		self.env = env
 		self.dead_num = 0
 
-
-	def generate(self,traps,num=None):
-		if num ==None:
+	def generate(self, traps, num=None):
+		if num == None:
 			num = self.insect_num
 
 		temp_num = 0
-		while temp_num<num:
+		while temp_num < num:
 			temp = insect()
-			temp.fitness = self.env.eva(temp.pos,temp.eat_num)
+			temp.fitness = self.env.eva(temp.pos, temp.eat_num)
 			temp.best_pos = temp.pos
 			temp.best_fit = temp.fitness
 			temp.living_test(traps)
@@ -108,58 +113,87 @@ class insect_population(object):
 				if temp.fitness > self.global_best.fitness:
 					self.global_best = temp
 
-	def update(self,traps):
+	def update(self, traps):
+		"""
+		first generate new insects based on the current(yesterday) population
+		second update the position
+		third living test, machine test
+		:param traps:
+		:return:
+		"""
+
+		# Todo generate new insect based on current population
 		for temp in self.populations:
-			temp.update(self.global_best, self.env,traps)
-			# if not temp.status:
-			# 	print('one')
-			# 	continue
-		self.global_best = sorted(self.populations,key=lambda x:x.fitness,reverse=True)[0]
+			temp.update(self.global_best, self.env, traps)
+		self.global_best = copy.deepcopy(sorted(self.populations, key=lambda x: x.fitness, reverse=True)[0])
+		self.populations = list(filter(lambda x: x.status, self.populations))
 
-		# add a function to generate new population
-
-
-		self.populations = list(filter(lambda x:x.status,self.populations))
-		# short_num = self.insect_num-len(self.populations)
-		# self.dead_num += short_num
-		# # print(len(self.populations))
-		# self.generate(traps,short_num)
-		# print(len(self.populations))
+	# short_num = self.insect_num-len(self.populations)
+	# self.dead_num += short_num
+	# # print(len(self.populations))
+	# self.generate(traps,short_num)
+	# print(len(self.populations))
 
 
 class screen(object):
-	def __init__(self, length, width,step):
+	def __init__(self, length, width, step, machine_num):
 		self.x = length
 		self.y = width
 		self.step = step
 
-		self.x_num = length//step
-		self.y_num = width//step
+		self.x_num = length // step
+		self.y_num = width // step
 
+		self.machine_num = machine_num
+
+		self.machine_init()
 		self.food_init()
 
 	def food_init(self):
-		self.food = 100+np.random.rand(self.x_num,self.y_num)*50
+		self.food = np.random.rand(self.x_num, self.y_num) * 10  # 0-10
 
-	def eva(self, pos,eat_num):
-		x_coor = int(pos[0]//self.step)
-		y_coor = int(pos[1]//self.step)
+		for x, y in self.machines:
+			self.food[x, y] += 20
 
-		if self.food[x_coor,y_coor]>=eat_num:
-			self.food[x_coor,y_coor] = self.food[x_coor,y_coor]-eat_num
+	def eva(self, pos, eat_num):
+		x_coor = int(pos[0] // self.step)
+		y_coor = int(pos[1] // self.step)
+
+		if self.food[x_coor, y_coor] >= eat_num:
+			self.food[x_coor, y_coor] = self.food[x_coor, y_coor] - eat_num
 
 		else:
-			self.food[x_coor,y_coor] = 0
-		return self.food[x_coor,y_coor]
+			self.food[x_coor, y_coor] = 0
+		return self.food[x_coor, y_coor]
+
+	def machine_init(self):
+		"""
+		randomly generate some position to set machine
+		:return:
+		"""
+		self.machines = set()
+		while len(self.machines) < self.machine_num:
+			x_coordinate = random.randint(0, self.x_num)
+			y_coordinate = random.randint(0, self.y_num)
+
+			if (x_coordinate, y_coordinate) not in self.machines:
+				self.machines.add((x_coordinate, y_coordinate))
+
+	def food_update(self):
+		"""
+		the food is increasing with a fixed speed
+		:return:
+		"""
+		pass
 
 
 class Individual(object):
 
-	def __init__(self,x=None):
+	def __init__(self, x=None):
 		self.rank = None
 		self.crowding_distance = None
-		self.domination_count = None   #这个解被支配的次数
-		self.dominated_solutions = None   #被这个解支配的解
+		self.domination_count = None  # 这个解被支配的次数
+		self.dominated_solutions = None  # 被这个解支配的解
 		self.x = x
 		self.objectives = None
 		self.traps = []
@@ -169,12 +203,11 @@ class Individual(object):
 			return (self.x == other.x).all()
 		return False
 
-	def traps_generate(self,x_num,y_num,step):
+	def traps_generate(self, x_num, y_num, step):
 		for i in range(x_num):
 			for j in range(y_num):
-				if self.x[i,j]==1:
-					self.traps.append(trap(np.array([x_num*step,y_num*step])))
-
+				if self.x[i, j] == 1:
+					self.traps.append(trap(np.array([x_num * step, y_num * step])))
 
 	def dominates(self, other_individual):
 		if self.__eq__(other_individual):
@@ -187,8 +220,9 @@ class Individual(object):
 			or_condition = or_condition or first < second
 		return (and_condition and or_condition)
 
+
 class populations(object):
-	def __init__(self,pop_num,screen,insect_pop):
+	def __init__(self, pop_num, screen, insect_pop):
 		self.pop_num = pop_num
 		self.pops = []
 		self.fronts = []
@@ -197,21 +231,19 @@ class populations(object):
 
 	def initial(self):
 		for _ in range(self.pop_num):
-			temp_x = np.random.rand(self.screen.x_num,self.screen.y_num)
-			temp_x[temp_x>0.5] = 1
-			temp_x[temp_x<=0.5] = 0
+			temp_x = np.random.rand(self.screen.x_num, self.screen.y_num)
+			temp_x[temp_x > 0.5] = 1
+			temp_x[temp_x <= 0.5] = 0
 			insects = copy.deepcopy(self.insect_pop)
 			self.pops.append(Individual(temp_x))
-			self.pops[-1].traps_generate(self.screen.x_num,self.screen.y_num,self.screen.step)
-			self.pops[-1].objectives = self.evaluate(self.pops[-1].traps,insects)
+			self.pops[-1].traps_generate(self.screen.x_num, self.screen.y_num, self.screen.step)
+			self.pops[-1].objectives = self.evaluate(self.pops[-1].traps, insects)
 
-
-	def evaluate(self,traps,insect_pop):
+	def evaluate(self, traps, insect_pop):
 		for _ in range(100):
 			insect_pop.update(traps)
 
-		return 1/insect_pop.dead_num,len(traps)/(self.screen.y_num*self.screen.x_num)
-
+		return 1 / insect_pop.dead_num, len(traps) / (self.screen.y_num * self.screen.x_num)
 
 	def fast_dominated_sort(self):
 		self.fronts = [[]]
@@ -242,7 +274,7 @@ class populations(object):
 		for front in self.fronts:
 			self.calculate_crowding_distance(front)
 
-	def calculate_crowding_distance(self,front):
+	def calculate_crowding_distance(self, front):
 		if len(front) > 0:
 			solutions_num = len(front)
 			for individual in front:
@@ -260,8 +292,7 @@ class populations(object):
 						m]) / scale
 
 	def pop_sort(self):
-		self.pops = sorted(self.pops,key=lambda x:(x.rank,x.crowding_distance))
-
+		self.pops = sorted(self.pops, key=lambda x: (x.rank, x.crowding_distance))
 
 	def offspring_generate(self):
 		for _ in range(self.pop_num):
@@ -270,21 +301,12 @@ class populations(object):
 			temp_x[temp_x <= 0.5] = 0
 			insects = copy.deepcopy(self.insect_pop)
 			temp = Individual(temp_x)
-			temp.traps_generate(self.screen.x_num,self.screen.y_num,self.screen.step)
-			temp.objectives = self.evaluate(temp.traps,insects)
+			temp.traps_generate(self.screen.x_num, self.screen.y_num, self.screen.step)
+			temp.objectives = self.evaluate(temp.traps, insects)
 			self.pops.append(temp)
 
 	def update(self):
 		self.pops = self.pops[:self.pop_num]
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
