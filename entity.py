@@ -1,3 +1,4 @@
+import numpy
 import numpy as np
 import copy
 import random
@@ -25,6 +26,7 @@ class insect(object):
 		self.best_fit = None
 		self.fitness = None
 		self.status = True
+		self.stand_in_same_place = 0
 
 		self.eat_num = 0.5
 
@@ -36,6 +38,8 @@ class insect(object):
 		self.direction = temp1 + temp2
 		if self.direction.sum():
 			self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
+
+		pre_pos = [self.pos[0]//env.step,self.pos[1]//env.step]
 
 		self.pos = self.pos + self.direction * self.rate
 
@@ -49,19 +53,30 @@ class insect(object):
 		if self.pos[1] > env.y:
 			self.pos[1] = 2 * env.y - self.pos[1]
 
+		cur_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
+		self.stand_in_same_place += (1 if pre_pos==cur_pos else 0)
+
+		if self.stand_in_same_place>=15:
+			self.status = False
+			return
+
+
+
 		self.living_test(traps)
 		if not self.status:
 			return
 
-		# Todo
-		# self.in_machine(env)
-		# if not self.status:
-		# 	return
+
+		self.in_machine(env)
+		if not self.status:
+			return
 
 		self.fitness = env.eva(self.pos, self.eat_num)
 		if self.fitness > self.best_fit:
 			self.best_fit = self.fitness
 			self.best_pos = self.pos
+
+
 
 	def living_test(self, traps):
 		for trap in traps:
@@ -72,13 +87,30 @@ class insect(object):
 				break
 
 	def in_machine(self, env):
-		pass
+		dist = 1e6
+		for machine in env.machines:
+			dist = min(dist,numpy.sqrt((self.pos[0]-machine.x)**2+(self.pos[1]-machine.y)**2))
+
+
+
+		if dist< env.machines[0].threshold:
+			self.status = False if random.random()<0.9 else True
+		else:
+			self.status = False if random.random()<0.2 else True
+
+
 
 
 class trap(object):
 	def __init__(self, pos):
 		self.pos = pos
 		self.radius = 3
+
+class machine(object):
+	def __init__(self,x,y):
+		self.x = x
+		self.y = y
+		self.threshold = 5
 
 
 class insect_population(object):
@@ -128,11 +160,8 @@ class insect_population(object):
 		self.global_best = copy.deepcopy(sorted(self.populations, key=lambda x: x.fitness, reverse=True)[0])
 		self.populations = list(filter(lambda x: x.status, self.populations))
 
-	# short_num = self.insect_num-len(self.populations)
-	# self.dead_num += short_num
-	# # print(len(self.populations))
-	# self.generate(traps,short_num)
-	# print(len(self.populations))
+		self.env.update()
+
 
 
 class screen(object):
@@ -152,8 +181,7 @@ class screen(object):
 	def food_init(self):
 		self.food = np.random.rand(self.x_num, self.y_num) * 10  # 0-10
 
-		for x, y in self.machines:
-			self.food[x, y] += 20
+
 
 	def eva(self, pos, eat_num):
 		x_coor = int(pos[0] // self.step)
@@ -171,20 +199,24 @@ class screen(object):
 		randomly generate some position to set machine
 		:return:
 		"""
-		self.machines = set()
+		self.machines = []
 		while len(self.machines) < self.machine_num:
-			x_coordinate = random.randint(0, self.x_num)
-			y_coordinate = random.randint(0, self.y_num)
+			x = random.random()*self.x
+			y = random.random()*self.y
+			self.machines.append(machine(x,y))
 
-			if (x_coordinate, y_coordinate) not in self.machines:
-				self.machines.add((x_coordinate, y_coordinate))
+			x_t = x//self.x
+			y_t = y//self.y
 
-	def food_update(self):
+			self.food[x,y] += 20
+
+	def update(self):
 		"""
 		the food is increasing with a fixed speed
 		:return:
 		"""
-		pass
+		for i,j in zip(range(self.x_num),range(self.y_num)):
+			self.food[i,j] += random.random()*2+1
 
 
 class Individual(object):

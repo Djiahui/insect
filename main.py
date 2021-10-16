@@ -1,3 +1,4 @@
+import copy
 import pickle
 
 import entity
@@ -8,9 +9,9 @@ import simulator
 
 
 def main(x,y,step,insect_num,sample_num,insect_iteration):
-	env = entity.screen(x, y, step)
-	pops = entity.insect_population(insect_num, env)
-	simulator.sample_generate(sample_num,env,pops,insect_iteration)
+	env = entity.screen(x, y, step,4)
+	pops = entity.insect_population(insect_num, copy.deepcopy(env))
+	simulator.sample_generate(sample_num,env,copy.deepcopy(pops),insect_iteration)
 	exit()
 
 

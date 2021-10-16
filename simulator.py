@@ -5,7 +5,7 @@ import copy
 from tqdm import tqdm
 
 import pickle
-
+import os
 
 def draw(pops,traps):
     poses = list(map(lambda x:x.pos,pops.populations))
@@ -41,6 +41,7 @@ def simulate(matrix,iteration,pops):
 
     for i in range(iteration):
         pops.update(traps)
+
         # print(pops.global_best.fitness)
     # draw(pops,traps)
 
@@ -89,7 +90,11 @@ def sample_generate(sample_num,env,pops,insect_iteration):
 
     # for _ in range(sample_num):
     for _ in tqdm(range(sample_num)):
-        with open('data2.pkl','rb') as pkl1:
+        if not os.path.exists('surrogate model\data2.pkl'):
+            data = {}
+            with open('surrogate model\data2.pkl','wb') as pkl:
+                pickle.dump(data,pkl)
+        with open('surrogate model\data2.pkl','rb') as pkl1:
             data = pickle.load(pkl1)
 
         matrix = matrix_generate(env.x,env.y,env.step)
