@@ -45,7 +45,7 @@ def data_filter(path):
 		v['target'] = v['target'][-1]
 
 	with open('data_adults','wb') as pkl2:
-		pickle.dump(pkl2)
+		pickle.dump(final_data_new,pkl2)
 
 if __name__ == "__main__":
 	data_filter('final_data_new')
