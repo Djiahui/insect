@@ -19,8 +19,8 @@ def draw(pops,traps):
     # plt.scatter(trap_pos[:,0],trap_pos[:,1],s=2000,c='r',alpha=0.5)
     # plt.title(str(i))
     plt.grid()
-    plt.xticks(np.arange(0,100,10))
-    plt.yticks(np.arange(0,100,10))
+    plt.xticks(np.arange(0,200,10))
+    plt.yticks(np.arange(0,200,10))
     plt.show()
 
 

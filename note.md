@@ -10,3 +10,5 @@ temperature is directly from data in that tex file.
 虫子的移动仍然跟粮食的数量有关,不和每只虫子的
 
 最终的损失和被抓走的虫子有关 
+
+四个黑色方块、圆圈、长方形，其余空白，各设置一种food（ij）
