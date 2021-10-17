@@ -47,5 +47,25 @@ def data_filter(path):
 	with open('data_adults','wb') as pkl2:
 		pickle.dump(final_data_new,pkl2)
 
+def temp_data_collect():
+	with open('final_data_new','rb') as pkl:
+		data = pickle.load(pkl)
+
+	temperature_data = {}
+	count = 0
+	for k,v in data.items():
+		if not v['data'] in temperature_data and count==2:
+			temperature_data[v['data']] = v['temp']
+			count = 0
+		elif v['data'] in temperature_data:
+			continue
+		else:
+			count += 1
+
+	with open('temperature_data','wb') as pkl2:
+		pickle.dump(temperature_data,pkl2)
+
 if __name__ == "__main__":
+	temp_data_collect()
+	exit()
 	data_filter('final_data_new')

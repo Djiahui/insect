@@ -5,11 +5,11 @@ import random
 
 
 class insect(object):
-	def __init__(self, pos=None, direction=None, rate=None):
+	def __init__(self, x,y, pos=None, direction=None, rate=None):
 		if pos:
 			self.pos = pos
 		else:
-			self.pos = np.random.rand(2) * 100
+			self.pos = np.random.rand(2) * 200
 
 		if direction:
 			self.direction = direction
@@ -20,7 +20,7 @@ class insect(object):
 		if rate:
 			self.rate = rate
 		else:
-			self.rate = 1
+			self.rate = 4
 
 		self.best_pos = np.zeros(2)
 		self.best_fit = None
@@ -128,7 +128,7 @@ class insect_population(object):
 
 		temp_num = 0
 		while temp_num < num:
-			temp = insect()
+			temp = insect(self.env.x,self.env.y)
 			temp.fitness = self.env.eva(temp.pos, temp.eat_num)
 			temp.best_pos = temp.pos
 			temp.best_fit = temp.fitness
@@ -175,8 +175,9 @@ class screen(object):
 
 		self.machine_num = machine_num
 
-		self.machine_init()
+
 		self.food_init()
+		self.machine_init()
 
 	def food_init(self):
 		self.food = np.random.rand(self.x_num, self.y_num) * 10  # 0-10
@@ -205,10 +206,10 @@ class screen(object):
 			y = random.random()*self.y
 			self.machines.append(machine(x,y))
 
-			x_t = x//self.x
-			y_t = y//self.y
+			x_t = int(x//self.step)
+			y_t = int(y//self.step)
 
-			self.food[x,y] += 20
+			self.food[x_t,y_t] += 20
 
 	def update(self):
 		"""

@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import entity
 import matplotlib.pyplot as plt
@@ -14,7 +16,7 @@ def draw(pops,traps):
     trap_pos = list(map(lambda x:x.pos,traps))
     trap_pos = np.vstack(trap_pos)
     plt.scatter(poses[:,0],poses[:,1])
-    plt.scatter(trap_pos[:,0],trap_pos[:,1],s=2000,c='r',alpha=0.5)
+    # plt.scatter(trap_pos[:,0],trap_pos[:,1],s=2000,c='r',alpha=0.5)
     # plt.title(str(i))
     plt.grid()
     plt.xticks(np.arange(0,100,10))
@@ -43,17 +45,25 @@ def simulate(matrix,iteration,pops):
         pops.update(traps)
 
         # print(pops.global_best.fitness)
-    # draw(pops,traps)
+        draw(pops,traps)
+
+    exit()
 
     return pops.env.food.sum()
 
 
-def matrix_generate(x, y, step):
+def matrix_generate(x, y, step,test=True):
     x_num = x//step +1
     y_num = y//step +1
 
     matrix = [[0]*y_num for _ in range(x_num)]
 
+    if test:
+        for i in range(x_num):
+            for j in range(y_num):
+                if random.random()<0.05:
+                    matrix[i][j] = 1
+        return matrix
     temp = np.random.rand()
     if temp<0.25:
         for i in range(x_num):
