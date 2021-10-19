@@ -10,12 +10,19 @@ import pickle
 import os
 
 def draw(pops,traps):
-    poses = list(map(lambda x:x.pos,pops.populations))
+    """
+    # the Coordinate transformation is applied such as [0,10]--[10,200]
+    :param pops:
+    :param traps:
+    :return:
+    """
+    poses = list(map(lambda x:[x.pos[1],200-x.pos[0]],pops.populations))
     poses = np.vstack(poses)
 
-    trap_pos = list(map(lambda x:x.pos,traps))
+    trap_pos = list(map(lambda x:[x.pos[1],200-x.pos[0]],traps))
     trap_pos = np.vstack(trap_pos)
     plt.scatter(poses[:,0],poses[:,1])
+    plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5)
     # plt.scatter(trap_pos[:,0],trap_pos[:,1],s=2000,c='r',alpha=0.5)
     # plt.title(str(i))
     plt.grid()
@@ -40,6 +47,7 @@ def trap_generate(matrix,x,y,step):
 def simulate(matrix,iteration,pops):
     traps = trap_generate(matrix,pops.env.x,pops.env.y,pops.env.step)
     pops.generate(traps)
+    draw(pops,traps)
 
     for i in range(iteration):
         pops.update(traps)
@@ -60,7 +68,12 @@ def matrix_generate(x, y, step,test=True):
 
     if test:
         for i in range(x_num):
+            # left to right
             for j in range(y_num):
+                #from bottom to top
+                # only for current screen
+                if i<6 and j<12:
+                    continue
                 if random.random()<0.05:
                     matrix[i][j] = 1
         return matrix
@@ -68,24 +81,36 @@ def matrix_generate(x, y, step,test=True):
     if temp<0.25:
         for i in range(x_num):
             for j in range(y_num):
+                # only for current screen
+                if i>15 and j<12:
+                    continue
                 r1 = np.random.rand()
                 if r1<0.1:
                     matrix[i][j] = 1
     elif 0.25<temp<0.5:
         for i in range(x_num):
             for j in range(y_num):
+                # only for current screen
+                if i>15 and j<12:
+                    continue
                 r1 = np.random.rand()
                 if r1<0.2:
                     matrix[i][j] = 1
     elif 0.5<temp<0.75:
         for i in range(x_num):
             for j in range(y_num):
+                # only for current screen
+                if i>15 and j<12:
+                    continue
                 r1 = np.random.rand()
                 if r1<0.25:
                     matrix[i][j] = 1
     else:
         for i in range(x_num):
             for j in range(y_num):
+                # only for current screen
+                if i>15 and j<12:
+                    continue
                 r1 = np.random.rand()
                 r2 = np.random.rand()
                 if r2 < r1:

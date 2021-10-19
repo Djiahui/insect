@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy
 import numpy as np
 import copy
@@ -5,7 +6,7 @@ import random
 
 
 class insect(object):
-	def __init__(self, x,y, pos=None, direction=None, rate=None):
+	def __init__(self, x, y, pos=None, direction=None, rate=None):
 		if pos:
 			self.pos = pos
 		else:
@@ -28,7 +29,7 @@ class insect(object):
 		self.status = True
 		self.stand_in_same_place = 0
 
-		self.eat_num = 0.5
+		self.eat_num = 0.1
 
 	def update(self, global_best, env, traps):
 
@@ -38,8 +39,11 @@ class insect(object):
 		self.direction = temp1 + temp2
 		if self.direction.sum():
 			self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
+			if random.random()<0.01:
+				print('direction')
+				print(self.direction)
 
-		pre_pos = [self.pos[0]//env.step,self.pos[1]//env.step]
+		pre_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
 
 		self.pos = self.pos + self.direction * self.rate
 
@@ -54,18 +58,15 @@ class insect(object):
 			self.pos[1] = 2 * env.y - self.pos[1]
 
 		cur_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
-		self.stand_in_same_place += (1 if pre_pos==cur_pos else 0)
+		self.stand_in_same_place += (1 if pre_pos == cur_pos else 0)
 
-		if self.stand_in_same_place>=15:
+		if self.stand_in_same_place >= 15:
 			self.status = False
 			return
-
-
 
 		self.living_test(traps)
 		if not self.status:
 			return
-
 
 		self.in_machine(env)
 		if not self.status:
@@ -75,8 +76,6 @@ class insect(object):
 		if self.fitness > self.best_fit:
 			self.best_fit = self.fitness
 			self.best_pos = self.pos
-
-
 
 	def living_test(self, traps):
 		for trap in traps:
@@ -89,16 +88,12 @@ class insect(object):
 	def in_machine(self, env):
 		dist = 1e6
 		for machine in env.machines:
-			dist = min(dist,numpy.sqrt((self.pos[0]-machine.x)**2+(self.pos[1]-machine.y)**2))
+			dist = min(dist, numpy.sqrt((self.pos[0] - machine.x) ** 2 + (self.pos[1] - machine.y) ** 2))
 
-
-
-		if dist< env.machines[0].threshold:
-			self.status = False if random.random()<0.9 else True
+		if dist < env.machines[0].threshold:
+			self.status = False if random.random() < 0.9 else True
 		else:
-			self.status = False if random.random()<0.2 else True
-
-
+			self.status = False if random.random() < 0.2 else True
 
 
 class trap(object):
@@ -106,11 +101,23 @@ class trap(object):
 		self.pos = pos
 		self.radius = 3
 
-class machine(object):
-	def __init__(self,x,y):
-		self.x = x
-		self.y = y
+
+class Machine(object):
+	def __init__(self, x, y,step):
+		"""
+		the parameter x and y are coordinate of block, thus the true coordinate of machine need to be calculated based on the step parameter.
+		:param x:
+		:param y:
+		:param step:
+		"""
+		self.coordinate_x = x
+		self.coordinate_y = y
 		self.threshold = 5
+		self.x = x*step+step//2
+		self.y = y*step+step//2
+
+
+
 
 
 class insect_population(object):
@@ -128,7 +135,9 @@ class insect_population(object):
 
 		temp_num = 0
 		while temp_num < num:
-			temp = insect(self.env.x,self.env.y)
+			temp = insect(self.env.x, self.env.y)
+			if temp.pos[0]<60 and temp.pos[1]<120:
+				continue
 			temp.fitness = self.env.eva(temp.pos, temp.eat_num)
 			temp.best_pos = temp.pos
 			temp.best_fit = temp.fitness
@@ -163,9 +172,35 @@ class insect_population(object):
 		self.env.update()
 
 
-
 class screen(object):
 	def __init__(self, length, width, step, machine_num):
+		"""
+		200*200见方的一个仓库，左上角有一些空地空地的大小为6*12
+		* * * * * * * * * * * * + + + + + + + +
+		* * * * * * * * * * * * + + q + + + + +
+		* * * * * * * * * * * * + + + + + + + +
+		* * * * * * * * * * * * + + + + + + + +
+		* * * * * * * * * * * * + + + + + + + +
+		* * * * * * * * * * * * + + + + + + + +
+		+ + + + + + + + + + + + + q q + + + + +
+		+ + + + + + + + + + + + + + + + + + + +
+		+ + + + + + + f f + + f + q q + + + + +
+		+ + + + + + + f + + + + + + + + + + + +
+		+ + + + m + + f + + + m + q q + + + + +
+		+ + + + + + + + + + + + + + + + + + + +
+		+ + + + + + + + + f + + + q q + + + + +
+		+ + + + + + + + + + + + + + + + + + + +
+		+ + + + + f + + + + + + + q q + + + + q
+		+ + + + m f + + + + + m + + + + + + f +
+		+ + + + + + + + + + + + + + + + + + + q
+		+ + + + + + + + + + + + f + + + + + + +
+		+ + + + + + + + + + + + + + + + + + + +
+		+ + + + + + + + + + + + q q q + + + + +
+		:param length:
+		:param width:
+		:param step:
+		:param machine_num:
+		"""
 		self.x = length
 		self.y = width
 		self.step = step
@@ -175,13 +210,30 @@ class screen(object):
 
 		self.machine_num = machine_num
 
-
+		self.coordinate_deter()
 		self.food_init()
 		self.machine_init()
 
-	def food_init(self):
-		self.food = np.random.rand(self.x_num, self.y_num) * 10  # 0-10
+		# an interesting function...
+		# self.plot()
 
+
+	def food_init(self):
+		self.food = np.zeros((self.x_num,self.y_num))
+		for i in range(self.x_num):
+			for j in range(self.y_num):
+				if self.map_dict[i,j] == '*':
+					#no food
+					continue
+				elif self.map_dict[i,j] == 'm':
+					# machine
+					self.food[i,j] = np.random.random()*10
+				elif self.map_dict[i,j] == 'q':
+					#circle
+					self.food[i,j] = np.random.random()*5
+				else:
+					#square
+					self.food[i,j] = np.random.random()*2
 
 
 	def eva(self, pos, eat_num):
@@ -201,23 +253,70 @@ class screen(object):
 		:return:
 		"""
 		self.machines = []
-		while len(self.machines) < self.machine_num:
-			x = random.random()*self.x
-			y = random.random()*self.y
-			self.machines.append(machine(x,y))
-
-			x_t = int(x//self.step)
-			y_t = int(y//self.step)
-
-			self.food[x_t,y_t] += 20
+		for x,y in self.machines_coordinates:
+			self.machines.append(Machine(x, y,self.step))
 
 	def update(self):
 		"""
 		the food is increasing with a fixed speed
 		:return:
 		"""
-		for i,j in zip(range(self.x_num),range(self.y_num)):
-			self.food[i,j] += random.random()*2+1
+		for i in range(self.x_num):
+			for j in range(self.y_num):
+				self.food[i, j] += random.random() * 2 + 1
+
+	def coordinate_deter(self):
+		map = ['* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + q + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '+ + + + + + + + + + + + + q q + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + + + f f + + f + q q + + + + +',
+			   '+ + + + + + + f + + + + + + + + + + + +',
+			   '+ + + + m + + f + + + m + q q + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + + + + + f + + + q q + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + f + + + + + + + q q + + + + q',
+			   '+ + + + m f + + + + + m + + + + + + f +',
+			   '+ + + + + + + + + + + + + + + + + + + q',
+			   '+ + + + + + + + + + + + f + + + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + + + + + + + + q q q + + + + +']
+
+		self.map_dict = {}
+		self.machines_coordinates = []
+		for i in range(self.x_num):
+			temp = map[i].split(' ')
+			for j in range(self.y_num):
+				self.map_dict[(i,j)] = temp[j]
+				if self.map_dict[(i,j)] == 'm':
+					self.machines_coordinates.append((i,j))
+
+	def plot(self):
+		vlines = np.linspace(0,2,self.x_num+1)
+		hlines = np.linspace(0,2,self.y_num+1)
+
+		plt.hlines(hlines,min(hlines),max(hlines))
+		plt.vlines(vlines,min(vlines),max(vlines))
+
+		xs, ys = np.meshgrid(vlines[1:],hlines[:-1])
+
+		for i,(x,y) in enumerate(zip(xs.flatten(),ys.flatten()[::-1])):
+			t_x = i//self.x_num
+			t_y = i%self.x_num
+			plt.text(x,y,self.map_dict[t_x,t_y],horizontalalignment='right',verticalalignment='bottom')
+		plt.axis('off')
+
+		plt.show()
+
+
+
+
+
 
 
 class Individual(object):
