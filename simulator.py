@@ -49,13 +49,20 @@ def simulate(matrix,iteration,pops):
     pops.generate(traps)
     draw(pops,traps)
 
-    for i in range(iteration):
-        pops.update(traps)
+    with open('data_from_sim/temperature_data','rb') as pkl:
+        temp_data = pickle.load(pkl)
 
-        # print(pops.global_best.fitness)
-        draw(pops,traps)
+    day_count = 0
+    for _,temp in temp_data.items():
+        if day_count>iteration:
+            break
+        pops.update(traps,temp)
+        draw(pops, traps)
+
+        day_count += 1
 
     exit()
+
 
     return pops.env.food.sum()
 

@@ -16,7 +16,7 @@ class insect(object):
 			self.direction = direction
 		else:
 			self.direction = np.random.rand(2)
-			self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
+			# self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
 
 		if rate:
 			self.rate = rate
@@ -36,26 +36,47 @@ class insect(object):
 		temp1 = self.best_pos - self.pos
 		temp2 = global_best.pos - self.pos
 
-		self.direction = temp1 + temp2
-		if self.direction.sum():
-			self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
-			if random.random()<0.01:
-				print('direction')
-				print(self.direction)
-
 		pre_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
+		self.direction = self.direction+random.random()*temp1+random.random()*temp2
 
-		self.pos = self.pos + self.direction * self.rate
+		self.pos = self.pos + np.linalg.norm(self.direction, ord=2)
 
-		if self.pos[0] < 0:
-			self.pos[0] = -self.pos[0]
-		if self.pos[0] > env.x:
-			self.pos[0] = 2 * env.x - self.pos[0]
+		# self.direction = np.linalg.norm(temp1 + temp2, ord=2)+self.direction
+		# if self.direction.sum():
+		# 	self.pos = self.pos + self.direction * self.rate
+		# 	self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
 
-		if self.pos[1] < 0:
-			self.pos[1] = -self.pos[1]
-		if self.pos[1] > env.y:
-			self.pos[1] = 2 * env.y - self.pos[1]
+		if random.random()<0.01:
+			print('direction')
+			print(self.direction)
+
+
+
+
+
+		#for current screen
+		if 0<self.pos[0]<60 and 0<self.pos[1]<120:
+			if pre_pos[0] < 6:
+				self.pos[1] = 120
+			else:
+				self.pos[0] = 60
+
+		self.pos[0] = min(env.x,self.pos[0])
+		self.pos[0] = max(self.pos[0],0)
+		self.pos[1] = min(env.y,self.pos[1])
+		self.pos[1] = max(0,self.pos[1])
+
+		# if self.pos[0] < 0:
+		# 	self.pos[0] = -self.pos[0]
+		# if self.pos[0] > env.x:
+		# 	self.pos[0] = 2 * env.x - self.pos[0]
+		#
+		# if self.pos[1] < 0:
+		# 	self.pos[1] = -self.pos[1]
+		# if self.pos[1] > env.y:
+		# 	self.pos[1] = 2 * env.y - self.pos[1]
+
+
 
 		cur_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
 		self.stand_in_same_place += (1 if pre_pos == cur_pos else 0)
@@ -154,7 +175,7 @@ class insect_population(object):
 				if temp.fitness > self.global_best.fitness:
 					self.global_best = temp
 
-	def update(self, traps):
+	def update(self, traps,temp):
 		"""
 		first generate new insects based on the current(yesterday) population
 		second update the position
@@ -237,8 +258,9 @@ class screen(object):
 
 
 	def eva(self, pos, eat_num):
-		x_coor = int(pos[0] // self.step)
-		y_coor = int(pos[1] // self.step)
+		# when the coordinate is 200,200//10=20, which is out of the index(19)
+		x_coor = min(19, int(pos[0] // self.step))
+		y_coor = min(19, int(pos[1] // self.step))
 
 		if self.food[x_coor, y_coor] >= eat_num:
 			self.food[x_coor, y_coor] = self.food[x_coor, y_coor] - eat_num

@@ -48,7 +48,7 @@ if __name__ == '__main__':
 	x = 200
 	y = 200
 	step = 10
-	insect_num = 1000
+	insect_num = 10
 	sample_num = 1000
 	insect_iteration = 10
 	main(x,y,step,insect_num,sample_num,insect_iteration)
