@@ -47,7 +47,7 @@ def main():
 
 	optim = torch.optim.Adam(net.parameters(),0.1)
 
-	for batch_th in range(100):
+	for batch_th in range(10):
 		for ith,data in enumerate(dataloader):
 			s = data['start']
 			temp = data['temp']
@@ -74,16 +74,7 @@ def main():
 
 					local_loss.append(loss_test)
 				print(torch.tensor(local_loss).mean().item()/dataset.__len__())
-
-
-
-
-
-
-
-
-
-
+	torch.save(net.state_dict(),'regression_model_parameters.pkl')
 
 if __name__ == "__main__":
 	main()

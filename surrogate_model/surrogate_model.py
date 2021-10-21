@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class dataset(Dataset):
 	def __init__(self):
-		with open('data2.pkl','rb') as pkl:
+		with open('../data2.pkl', 'rb') as pkl:
 			self.total_data = pickle.load(pkl)
 
 	def __len__(self):
@@ -19,7 +19,7 @@ class dataset(Dataset):
 
 
 
-class net(nn.Module):
+class surrogate_net(nn.Module):
 	def __init__(self):
 		super(net, self).__init__()
 		self.con0 = nn.Conv2d(1,1,4,2)
@@ -50,7 +50,7 @@ def main():
 	train_loader = DataLoader(train_data,batch_size=16)
 	test_loader = DataLoader(test_data,batch_size=16)
 
-	mynet = net()
+	mynet = surrogate_net()
 	optimizer = torch.optim.Adam(mynet.parameters(),lr=0.01)
 	loss_fun = nn.MSELoss()
 	total_loss = []
@@ -92,8 +92,8 @@ def main():
 
 
 if __name__ =="__main__":
-	main()
-	exit()
+	# main()
+	# exit()
 	input = torch.rand(1,1,21,21)
 
 	con = nn.Conv2d(1,1,4,2)

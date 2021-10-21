@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 import simulator
 
 
-def main(x,y,step,insect_num,sample_num,insect_iteration):
-	env = entity.screen(x, y, step,4)
-	pops = entity.insect_population(insect_num, copy.deepcopy(env))
-	simulator.sample_generate(sample_num,env,copy.deepcopy(pops),insect_iteration)
-	exit()
+def main(x,y,step,insect_num,sample_num,insect_iteration,pop_num,train=True):
+	env = entity.screen(x, y, step)
+	if train:
+		pops = entity.insect_population(insect_num, copy.deepcopy(env))
+		simulator.sample_generate(sample_num,env,copy.deepcopy(pops),insect_iteration)
 
 
 	population = entity.populations(pop_num,env,entity.insect_population(insect_num,env))
@@ -51,4 +51,5 @@ if __name__ == '__main__':
 	insect_num = 10
 	sample_num = 1000
 	insect_iteration = 10
-	main(x,y,step,insect_num,sample_num,insect_iteration)
+	pop_num = 10
+	main(x,y,step,insect_num,sample_num,insect_iteration,pop_num)

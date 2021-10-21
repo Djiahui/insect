@@ -4,7 +4,9 @@ import numpy as np
 import copy
 import random
 
-
+import torch
+from data_from_sim.predict_net import pre_net
+from surrogate_model.surrogate_model import surrogate_net
 class insect(object):
 	def __init__(self, x, y, pos=None, direction=None, rate=None):
 		if pos:
@@ -150,6 +152,9 @@ class insect_population(object):
 		self.env = env
 		self.dead_num = 0
 
+		self.regression_model = pre_net()
+		self.regression_model.load_state_dict(torch.load('data_from_sim/regression_model_parameters.pkl'))
+
 	def generate(self, traps, num=None):
 		if num == None:
 			num = self.insect_num
@@ -173,7 +178,7 @@ class insect_population(object):
 				self.global_best = temp
 			else:
 				if temp.fitness > self.global_best.fitness:
-					self.global_best = temp
+					self.global_best = copy.deepcopy(temp)
 
 	def update(self, traps,temp):
 		"""
@@ -184,7 +189,12 @@ class insect_population(object):
 		:return:
 		"""
 
-		# Todo generate new insect based on current population
+		current_num = len(self.populations)
+		input = torch.tensor([current_num]+temp)
+		predict_num = round(self.regression_model(input).item())
+		to_generate_num = max(0,predict_num-current_num)
+		self.generate(traps,to_generate_num)
+
 		for temp in self.populations:
 			temp.update(self.global_best, self.env, traps)
 		self.global_best = copy.deepcopy(sorted(self.populations, key=lambda x: x.fitness, reverse=True)[0])
@@ -194,7 +204,7 @@ class insect_population(object):
 
 
 class screen(object):
-	def __init__(self, length, width, step, machine_num):
+	def __init__(self, length, width, step):
 		"""
 		200*200见方的一个仓库，左上角有一些空地空地的大小为6*12
 		* * * * * * * * * * * * + + + + + + + +
@@ -228,8 +238,6 @@ class screen(object):
 
 		self.x_num = length // step
 		self.y_num = width // step
-
-		self.machine_num = machine_num
 
 		self.coordinate_deter()
 		self.food_init()
@@ -383,21 +391,27 @@ class populations(object):
 		self.screen = screen
 		self.insect_pop = insect_pop
 
+		#Todo apple the surrogate model
+		self.surrogate_model = surrogate_net()
+		self.surrogate_model.load_state_dict(torch.load('surrogate_model/surrogate_model_parameters.pkl'))
+
 	def initial(self):
 		for _ in range(self.pop_num):
-			temp_x = np.random.rand(self.screen.x_num, self.screen.y_num)
+			temp_x = np.random.rand(self.screen.x_num+1, self.screen.y_num+1)
 			temp_x[temp_x > 0.5] = 1
 			temp_x[temp_x <= 0.5] = 0
-			insects = copy.deepcopy(self.insect_pop)
 			self.pops.append(Individual(temp_x))
-			self.pops[-1].traps_generate(self.screen.x_num, self.screen.y_num, self.screen.step)
-			self.pops[-1].objectives = self.evaluate(self.pops[-1].traps, insects)
+			self.evaluate(self.pops[-1])
 
-	def evaluate(self, traps, insect_pop):
-		for _ in range(100):
-			insect_pop.update(traps)
+	def evaluate(self, pop):
+		"""
+		:param pop: entity.Individual
+		:return:
+		"""
+		#Todo transoforme the np array to tensor
+		input = pop.x
+		pop.objective = sum(pop.x),self.surrogate_model(input)
 
-		return 1 / insect_pop.dead_num, len(traps) / (self.screen.y_num * self.screen.x_num)
 
 	def fast_dominated_sort(self):
 		self.fronts = [[]]
@@ -453,11 +467,8 @@ class populations(object):
 			temp_x = np.random.rand(self.screen.x_num, self.screen.y_num)
 			temp_x[temp_x > 0.5] = 1
 			temp_x[temp_x <= 0.5] = 0
-			insects = copy.deepcopy(self.insect_pop)
-			temp = Individual(temp_x)
-			temp.traps_generate(self.screen.x_num, self.screen.y_num, self.screen.step)
-			temp.objectives = self.evaluate(temp.traps, insects)
-			self.pops.append(temp)
+			self.pops.append(Individual(temp_x))
+			self.evaluate(self.pops[-1])
 
 	def update(self):
 		self.pops = self.pops[:self.pop_num]

@@ -132,11 +132,11 @@ def sample_generate(sample_num,env,pops,insect_iteration):
 
     # for _ in range(sample_num):
     for _ in tqdm(range(sample_num)):
-        if not os.path.exists('surrogate model\data2.pkl'):
+        if not os.path.exists('surrogate_model\data_sample.pkl'):
             data = {}
-            with open('surrogate model\data2.pkl','wb') as pkl:
+            with open('surrogate_model\data2.pkl','wb') as pkl:
                 pickle.dump(data,pkl)
-        with open('surrogate model\data2.pkl','rb') as pkl1:
+        with open('surrogate_model\data_sample.pkl','rb') as pkl1:
             data = pickle.load(pkl1)
 
         matrix = matrix_generate(env.x,env.y,env.step)
