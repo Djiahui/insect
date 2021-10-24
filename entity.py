@@ -82,11 +82,12 @@ class insect(object):
 
 		cur_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
 		self.stand_in_same_place += (1 if pre_pos == cur_pos else 0)
-
-		if self.stand_in_same_place >= 15:
+		#Todo 5 days
+		if self.stand_in_same_place >= 5:
 			self.status = False
+			env.in_machine_num += 1
 			return
-
+		#
 		self.living_test(traps)
 		if not self.status:
 			return
@@ -115,6 +116,7 @@ class insect(object):
 
 		if dist < env.machines[0].threshold:
 			self.status = False if random.random() < 0.9 else True
+			env.in_machine_num += 1
 		else:
 			self.status = False if random.random() < 0.2 else True
 
@@ -238,6 +240,8 @@ class screen(object):
 
 		self.x_num = length // step
 		self.y_num = width // step
+
+		self.in_machine_num = 0
 
 		self.coordinate_deter()
 		self.food_init()
@@ -384,12 +388,15 @@ class Individual(object):
 
 
 class populations(object):
-	def __init__(self, pop_num, screen, insect_pop):
+	def __init__(self, pop_num,x_num,y_num):
 		self.pop_num = pop_num
 		self.pops = []
 		self.fronts = []
-		self.screen = screen
-		self.insect_pop = insect_pop
+		self.x_num = x_num
+		self.y_num = y_num
+
+		self.crossover_num = pop_num
+		self.mutation_num = pop_num
 
 		#Todo apple the surrogate model
 		self.surrogate_model = surrogate_net()
@@ -397,9 +404,12 @@ class populations(object):
 
 	def initial(self):
 		for _ in range(self.pop_num):
-			temp_x = np.random.rand(self.screen.x_num+1, self.screen.y_num+1)
-			temp_x[temp_x > 0.5] = 1
-			temp_x[temp_x <= 0.5] = 0
+			temp_x = np.random.rand(self.x_num, self.y_num)
+			temp_y = np.random.rand(self.x_num,self.y_num)
+			index = temp_x>temp_y
+			temp_x[:].fill(0)
+			temp_x[index] = 1
+
 			self.pops.append(Individual(temp_x))
 			self.evaluate(self.pops[-1])
 
@@ -463,11 +473,27 @@ class populations(object):
 		self.pops = sorted(self.pops, key=lambda x: (x.rank, x.crowding_distance))
 
 	def offspring_generate(self):
-		for _ in range(self.pop_num):
-			temp_x = np.random.rand(self.screen.x_num, self.screen.y_num)
-			temp_x[temp_x > 0.5] = 1
-			temp_x[temp_x <= 0.5] = 0
-			self.pops.append(Individual(temp_x))
+		"""
+		crossover and mutation for binary variable
+		:return:
+		"""
+		for _ in range(self.crossover_num):
+			index = np.random.rand(self.x_num,self.y_num)<np.random.rand(self.x_num,self.y_num)
+			parents1,parents2 = random.choices(self.pops, k=2)
+			temp1 = parents1.x[:]
+			temp2 = parents2.x[:]
+			temp1[index] = parents2[index]
+			temp2[index] = parents1[index]
+			self.pops.append(Individual(temp1))
+			self.evaluate(self.pops[-1])
+			self.pops.append(Individual(temp2))
+			self.evaluate(self.pops[-1])
+
+		for pop in self.pops:
+			index = np.random.rand(self.x_num,self.y_num)<np.full((self.x_num,self.y_num),0.1)
+			temp = pop.x[:]
+			temp[index] = 1-temp[index]
+			self.pops.append(Individual(temp))
 			self.evaluate(self.pops[-1])
 
 	def update(self):

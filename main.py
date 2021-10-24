@@ -8,14 +8,16 @@ import matplotlib.pyplot as plt
 import simulator
 
 
-def main(x,y,step,insect_num,sample_num,insect_iteration,pop_num,train=True):
-	env = entity.screen(x, y, step)
+def main(x, y, step, insect_num, sample_num, insect_iteration, pop_num, train=True):
 	if train:
-		pops = entity.insect_population(insect_num, copy.deepcopy(env))
-		simulator.sample_generate(sample_num,env,copy.deepcopy(pops),insect_iteration)
+		simulator.sample_generate(x, y, step, insect_num, sample_num, insect_iteration)
+
+	exit()
+	optimize(pop_num)
 
 
-	population = entity.populations(pop_num,env,entity.insect_population(insect_num,env))
+def optimize(pop_num):
+	population = entity.populations(pop_num,21,21)
 	population.initial()
 	for _ in range(10):
 		population.offspring_generate()
@@ -28,20 +30,12 @@ def main(x,y,step,insect_num,sample_num,insect_iteration,pop_num,train=True):
 	exit()
 
 
-
-
 def draw(population):
-	temp = list(map(lambda x:x.objectives,population.pops))
+	temp = list(map(lambda x: x.objectives, population.pops))
 	temp = np.array(temp)
 
-	plt.scatter(temp[:,0],temp[:,1])
+	plt.scatter(temp[:, 0], temp[:, 1])
 	plt.show()
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -52,4 +46,4 @@ if __name__ == '__main__':
 	sample_num = 1000
 	insect_iteration = 10
 	pop_num = 10
-	main(x,y,step,insect_num,sample_num,insect_iteration,pop_num)
+	main(x, y, step, insect_num, sample_num, insect_iteration, pop_num)

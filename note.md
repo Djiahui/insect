@@ -12,3 +12,5 @@ temperature is directly from data in that tex file.
 最终的损失和被抓走的虫子有关 
 
 四个黑色方块、圆圈、长方形，其余空白，各设置一种food（ij）
+
+先计算虫子被捕捉的概率，再计算虫子被捕捉的数量，然后得到一个概率
