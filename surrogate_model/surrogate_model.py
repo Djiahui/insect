@@ -21,7 +21,7 @@ class dataset(Dataset):
 
 class surrogate_net(nn.Module):
 	def __init__(self):
-		super(net, self).__init__()
+		super(surrogate_net, self).__init__()
 		self.con0 = nn.Conv2d(1,1,4,2)
 		self.con1 = nn.Conv2d(1,1,kernel_size=2,stride=2)
 		self.con2 = nn.Conv2d(1,1,kernel_size=2,stride=2)

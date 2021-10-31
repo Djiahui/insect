@@ -48,9 +48,9 @@ class insect(object):
 		# 	self.pos = self.pos + self.direction * self.rate
 		# 	self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
 
-		if random.random()<0.01:
-			print('direction')
-			print(self.direction)
+		# if random.random()<0.01:
+		# 	print('direction')
+		# 	print(self.direction)
 
 
 
@@ -192,6 +192,9 @@ class insect_population(object):
 		"""
 
 		current_num = len(self.populations)
+		if not current_num:
+			return
+
 		input = torch.tensor([current_num]+temp)
 		predict_num = round(self.regression_model(input).item())
 		to_generate_num = max(0,predict_num-current_num)
@@ -199,10 +202,10 @@ class insect_population(object):
 
 		for temp in self.populations:
 			temp.update(self.global_best, self.env, traps)
-		self.global_best = copy.deepcopy(sorted(self.populations, key=lambda x: x.fitness, reverse=True)[0])
-		self.populations = list(filter(lambda x: x.status, self.populations))
 
-		self.env.update()
+		self.populations = list(filter(lambda x: x.status, self.populations))
+		if self.populations:
+			self.global_best = copy.deepcopy(sorted(self.populations, key=lambda x: x.fitness, reverse=True)[0])
 
 
 class screen(object):
@@ -298,6 +301,10 @@ class screen(object):
 		for i in range(self.x_num):
 			for j in range(self.y_num):
 				self.food[i, j] += random.random() * 2 + 1
+
+		self.in_machine_num = 0
+
+
 
 	def coordinate_deter(self):
 		map = ['* * * * * * * * * * * * + + + + + + + +',

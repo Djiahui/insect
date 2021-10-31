@@ -9,7 +9,7 @@ import pickle
 import os
 
 
-def draw(pops, traps):
+def draw(pops, traps,day_count):
 	"""
 	# the Coordinate transformation is applied such as [0,10]--[10,200]
 	:param pops:
@@ -24,7 +24,7 @@ def draw(pops, traps):
 	plt.scatter(poses[:, 0], poses[:, 1])
 	plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5)
 	# plt.scatter(trap_pos[:,0],trap_pos[:,1],s=2000,c='r',alpha=0.5)
-	# plt.title(str(i))
+	plt.title(str(day_count))
 	plt.grid()
 	plt.xticks(np.arange(0, 200, 10))
 	plt.yticks(np.arange(0, 200, 10))
@@ -43,27 +43,36 @@ def trap_generate(matrix, x, y, step):
 	return traps
 
 
-def simulate(matrix, iteration, pops):
+def simulate(matrix, iteration, pops,draw_or_not = False):
 	traps = trap_generate(matrix, pops.env.x, pops.env.y, pops.env.step)
 	pops.generate(traps)
-	draw(pops, traps)
+	if draw_or_not:
+		draw(pops, traps,0)
 
 	with open('data_from_sim/temperature_data', 'rb') as pkl:
 		temp_data = pickle.load(pkl)
 
 	day_count = 0
+	in_machine_nums = [0 for _ in range(iteration)]
+
 	for _, temp in temp_data.items():
-		if day_count > iteration:
-			break
+
 		pops.update(traps, temp)
-		draw(pops, traps)
+		in_machine_nums[day_count] = pops.env.in_machine_num
+		pops.env.update()
+
+		if draw_or_not:
+			draw(pops, traps,day_count)
 
 		day_count += 1
+		if day_count == iteration:
+			break
 
-	return pops.env.in_machine_num
+	return in_machine_nums
 
 
 def matrix_generate(x, y, step, test=True):
+	print(test)
 	x_num = x // step + 1
 	y_num = y // step + 1
 
@@ -81,29 +90,38 @@ def matrix_generate(x, y, step, test=True):
 					matrix[i][j] = 1
 		return matrix
 	temp = np.random.rand()
-	if temp < 0.25:
+	if temp < 0.2:
 		for i in range(x_num):
 			for j in range(y_num):
 				# only for current screen
-				if i > 15 and j < 12:
+				if i < 6 and j < 12:
 					continue
 				r1 = np.random.rand()
-				if r1 < 0.1:
+				if r1 < 0.01:
 					matrix[i][j] = 1
-	elif 0.25 < temp < 0.5:
+	elif 0.2 < temp < 0.4:
 		for i in range(x_num):
 			for j in range(y_num):
 				# only for current screen
-				if i > 15 and j < 12:
+				if i < 6 and j < 12:
+					continue
+				r1 = np.random.rand()
+				if r1 < 0.01:
+					matrix[i][j] = 1
+	elif 0.4 < temp < 0.6:
+		for i in range(x_num):
+			for j in range(y_num):
+				# only for current screen
+				if i < 6 and j < 12:
 					continue
 				r1 = np.random.rand()
 				if r1 < 0.2:
 					matrix[i][j] = 1
-	elif 0.5 < temp < 0.75:
+	elif 0.6 < temp < 0.8:
 		for i in range(x_num):
 			for j in range(y_num):
 				# only for current screen
-				if i > 15 and j < 12:
+				if i < 6 and j < 12:
 					continue
 				r1 = np.random.rand()
 				if r1 < 0.25:
@@ -112,7 +130,7 @@ def matrix_generate(x, y, step, test=True):
 		for i in range(x_num):
 			for j in range(y_num):
 				# only for current screen
-				if i > 15 and j < 12:
+				if i < 6 and j < 12:
 					continue
 				r1 = np.random.rand()
 				r2 = np.random.rand()
@@ -138,17 +156,17 @@ def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 		with open('surrogate_model\data_sample.pkl', 'rb') as pkl1:
 			data = pickle.load(pkl1)
 
-		matrix = matrix_generate(env.x, env.y, env.step)
+		matrix = matrix_generate(env.x, env.y, env.step, False)
 		new_insect_pops = copy.deepcopy(pops)
-		insect_in_machine = simulate(matrix, insect_iteration, new_insect_pops)
-		probaility = prob_cal(insect_in_machine)
+		insects_in_machine = simulate(matrix, insect_iteration, new_insect_pops)
+		probaility = prob_cal(insects_in_machine)
 
 		n = len(data)
 		data[n] = {}
 		data[n]['sample'] = matrix
-		data[n]['label'] = probaility
+		data[n]['label'] = insects_in_machine
 
-		with open('data2.pkl', 'wb') as pkl:
+		with open('surrogate_model/data_sample.pkl', 'wb') as pkl:
 			pickle.dump(data, pkl)
 
 
