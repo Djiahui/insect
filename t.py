@@ -1,24 +1,59 @@
-import pickle
-import matplotlib.pyplot as plt
 import numpy as np
-with open('data2.pkl','rb') as pkl:
-	data = pickle.load(pkl)
+map1 =         ['* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + q + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '* * * * * * * * * * * * + + + + + + + +',
+			   '+ + + + + + + + + + + + + q q + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + + + f f + + f + q q + + + + +',
+			   '+ + + + + + + f + + + + + + + + + + + +',
+			   '+ + + + m + + f + + + m + q q + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + + + + + f + + + q q + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + f + + + + + + + q q + + + + q',
+			   '+ + + + m f + + + + + m + + + + + + f +',
+			   '+ + + + + + + + + + + + + + + + + + + q',
+			   '+ + + + + + + + + + + + f + + + + + + +',
+			   '+ + + + + + + + + + + + + + + + + + + +',
+			   '+ + + + + + + + + + + + q q q + + + + +']
+temp = [[0 for _ in range(20)] for _ in range(20)]
+lists = []
+for i in range(20):
+	t = map1[i].split(' ')
+	for j in range(20):
+		if t[j] == 'm':
+			temp[i][j] = 0.65
+			lists.append((i,j))
+		elif t[j] == 'f':
+			temp[i][j] = 0.5
+			lists.append((i,j))
+		elif t[j] == 'q':
+			temp[i][j] = 0.55
+			lists.append((i,j))
 
-new_data = []
-for k,v in data.items():
-	sum_k = 0
-	for l in v['sample']:
-		sum_k += sum(l)
+def bfs(index):
 
-	new_data.append([sum_k,v['label']])
+	queue = [index]
+	dic = [(0,1),(0,-1),(1,0),(-1,0)]
+	while queue:
+		ii,jj = queue.pop(0)
+		for d in dic:
+			if 0<=ii+d[0]<=19 and 0<=jj+d[1]<=19 and temp[ii][jj]>=0.1 and temp[ii][jj]-0.1>temp[ii+d[0]][jj+d[1]] and not(ii+d[0]<=5 and jj+d[1]<=11):
+				temp[ii+d[0]][jj+d[1]] = temp[ii][jj]-0.1
+				queue.append((ii+d[0],jj+d[1]))
+
+for index in lists:
+	bfs(index)
 
 
-temp = np.array(new_data)
-
-plt.scatter(temp[:,0],temp[:,1])
-
-plt.xlabel('the number of traps')
-plt.ylabel('the loss of food')
-plt.show()
+def fun(x):
+	return round(x,2)
+tt = []
+for ttt in temp:
+	tt.append(list(map(lambda x: round(x,2),ttt)))
+t = np.array(tt)
 
 exit()

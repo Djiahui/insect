@@ -7,6 +7,8 @@ import random
 import torch
 from data_from_sim.predict_net import pre_net
 from surrogate_model.surrogate_model import surrogate_net
+
+
 class insect(object):
 	def __init__(self, x, y, pos=None, direction=None, rate=None):
 		if pos:
@@ -18,7 +20,7 @@ class insect(object):
 			self.direction = direction
 		else:
 			self.direction = np.random.rand(2)
-			# self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
+		# self.direction = self.direction / np.linalg.norm(self.direction, ord=2)
 
 		if rate:
 			self.rate = rate
@@ -38,8 +40,8 @@ class insect(object):
 		temp1 = self.best_pos - self.pos
 		temp2 = global_best.pos - self.pos
 
-		pre_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
-		self.direction = self.direction+random.random()*temp1+random.random()*temp2
+		pre_pos = [int(self.pos[0] // env.step), int(self.pos[1] // env.step)]
+		self.direction = self.direction + random.random() * temp1 + random.random() * temp2
 
 		self.pos = self.pos + np.linalg.norm(self.direction, ord=2)
 
@@ -52,21 +54,17 @@ class insect(object):
 		# 	print('direction')
 		# 	print(self.direction)
 
-
-
-
-
-		#for current screen
-		if 0<self.pos[0]<60 and 0<self.pos[1]<120:
+		# for current screen
+		if 0 < self.pos[0] < 60 and 0 < self.pos[1] < 120:
 			if pre_pos[0] < 6:
 				self.pos[1] = 120
 			else:
 				self.pos[0] = 60
 
-		self.pos[0] = min(env.x,self.pos[0])
-		self.pos[0] = max(self.pos[0],0)
-		self.pos[1] = min(env.y,self.pos[1])
-		self.pos[1] = max(0,self.pos[1])
+		self.pos[0] = min(env.x, self.pos[0])
+		self.pos[0] = max(self.pos[0], 0)
+		self.pos[1] = min(env.y, self.pos[1])
+		self.pos[1] = max(0, self.pos[1])
 
 		# if self.pos[0] < 0:
 		# 	self.pos[0] = -self.pos[0]
@@ -77,22 +75,15 @@ class insect(object):
 		# 	self.pos[1] = -self.pos[1]
 		# if self.pos[1] > env.y:
 		# 	self.pos[1] = 2 * env.y - self.pos[1]
-
-
-
-		cur_pos = [self.pos[0] // env.step, self.pos[1] // env.step]
-		self.stand_in_same_place += (1 if pre_pos == cur_pos else 0)
-		#Todo 5 days
-		if self.stand_in_same_place >= 5:
-			self.status = False
-			env.in_machine_num += 1
-			return
-		#
 		self.living_test(traps)
 		if not self.status:
 			return
 
-		self.in_machine(env)
+		cur_pos = [int(self.pos[0] // env.step), int(self.pos[1] // env.step)]
+		self.stand_in_same_place += (1 if pre_pos == cur_pos else 0)
+		repair_pos = [min(x, 19) for x in cur_pos]
+
+		self.in_machine(repair_pos, env)
 		if not self.status:
 			return
 
@@ -109,16 +100,14 @@ class insect(object):
 				self.status = False
 				break
 
-	def in_machine(self, env):
-		dist = 1e6
-		for machine in env.machines:
-			dist = min(dist, numpy.sqrt((self.pos[0] - machine.x) ** 2 + (self.pos[1] - machine.y) ** 2))
-
-		if dist < env.machines[0].threshold:
-			self.status = False if random.random() < 0.9 else True
+	def in_machine(self, pos, env):
+		probability = env.capture_prob[pos[0], pos[1]]
+		e_t = np.exp(self.stand_in_same_place)
+		probability = (e_t + probability) / (1 + e_t + probability)
+		temp_random = np.random.random()
+		if temp_random < probability:
+			self.status = False
 			env.in_machine_num += 1
-		else:
-			self.status = False if random.random() < 0.2 else True
 
 
 class trap(object):
@@ -128,7 +117,7 @@ class trap(object):
 
 
 class Machine(object):
-	def __init__(self, x, y,step):
+	def __init__(self, x, y, step):
 		"""
 		the parameter x and y are coordinate of block, thus the true coordinate of machine need to be calculated based on the step parameter.
 		:param x:
@@ -138,11 +127,8 @@ class Machine(object):
 		self.coordinate_x = x
 		self.coordinate_y = y
 		self.threshold = 5
-		self.x = x*step+step//2
-		self.y = y*step+step//2
-
-
-
+		self.x = x * step + step // 2
+		self.y = y * step + step // 2
 
 
 class insect_population(object):
@@ -164,7 +150,7 @@ class insect_population(object):
 		temp_num = 0
 		while temp_num < num:
 			temp = insect(self.env.x, self.env.y)
-			if temp.pos[0]<60 and temp.pos[1]<120:
+			if temp.pos[0] < 60 and temp.pos[1] < 120:
 				continue
 			temp.fitness = self.env.eva(temp.pos, temp.eat_num)
 			temp.best_pos = temp.pos
@@ -182,7 +168,7 @@ class insect_population(object):
 				if temp.fitness > self.global_best.fitness:
 					self.global_best = copy.deepcopy(temp)
 
-	def update(self, traps,temp):
+	def update(self, traps, temp):
 		"""
 		first generate new insects based on the current(yesterday) population
 		second update the position
@@ -195,10 +181,10 @@ class insect_population(object):
 		if not current_num:
 			return
 
-		input = torch.tensor([current_num]+temp)
+		input = torch.tensor([current_num] + temp)
 		predict_num = round(self.regression_model(input).item())
-		to_generate_num = max(0,predict_num-current_num)
-		self.generate(traps,to_generate_num)
+		to_generate_num = max(0, predict_num - current_num)
+		self.generate(traps, to_generate_num)
 
 		for temp in self.populations:
 			temp.update(self.global_best, self.env, traps)
@@ -212,26 +198,26 @@ class screen(object):
 	def __init__(self, length, width, step):
 		"""
 		200*200见方的一个仓库，左上角有一些空地空地的大小为6*12
-		* * * * * * * * * * * * + + + + + + + +
-		* * * * * * * * * * * * + + q + + + + +
-		* * * * * * * * * * * * + + + + + + + +
-		* * * * * * * * * * * * + + + + + + + +
-		* * * * * * * * * * * * + + + + + + + +
-		* * * * * * * * * * * * + + + + + + + +
-		+ + + + + + + + + + + + + q q + + + + +
-		+ + + + + + + + + + + + + + + + + + + +
-		+ + + + + + + f f + + f + q q + + + + +
-		+ + + + + + + f + + + + + + + + + + + +
-		+ + + + m + + f + + + m + q q + + + + +
-		+ + + + + + + + + + + + + + + + + + + +
-		+ + + + + + + + + f + + + q q + + + + +
-		+ + + + + + + + + + + + + + + + + + + +
-		+ + + + + f + + + + + + + q q + + + + q
-		+ + + + m f + + + + + m + + + + + + f +
-		+ + + + + + + + + + + + + + + + + + + q
-		+ + + + + + + + + + + + f + + + + + + +
-		+ + + + + + + + + + + + + + + + + + + +
-		+ + + + + + + + + + + + q q q + + + + +
+		* * * * * * * * * * * * 3 3 3 3 3 3 3 3
+		* * * * * * * * * * * * 3 + + + + + + 3
+		* * * * * * * * * * * * 3 + 4 4 4 + + 3
+		* * * * * * * * * * * * 3 + 4 4 4 + + 3
+		* * * * * * * * * * * * 3 + + + + + + 3
+		* * * * * * * * * * * * 3 2 2 2 2 2 2 3
+		3 3 3 3 3 3 3 3 3 3 3 3 3 + + + + + + 3
+		3 + + + + + + + + + + + + + + + + + + 3
+		3 + 2 2 2 2 + 4 4 + + 4 + 4 4 + 4 + + 3
+		3 + 2 + 4 + + 4 + 4 + 4 + 4 4 + 4 + + 3
+		3 + 2 4 4 4 + 4 + 4 4 4 4 4 4 + + + + 3
+		3 + 2 + 4 + + + + 4 + 4 + 4 4 + 4 + + 3
+		3 + 2 + + + + + + 4 + + + 4 4 + 4 + + 3
+		3 + 2 + + + + + + 4 + + + 4 4 + + + + 3
+		3 + 2 + 4 4 + 2 + 4 + 4 + + + + + + + 3
+		3 + 2 4 4 4 + 2 + 4 4 4 4 2 2 + 4 + 4 3
+		3 + 2 + 4 4 + 2 + 4 + 4 + + + + 4 + 4 3
+		3 + + + + + + 2 + + + + 4 4 4 + 2 2 2 3
+		3 + + 2 2 2 + + + + + + 4 4 4 4 + + + 3
+		3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
 		:param length:
 		:param width:
 		:param step:
@@ -246,31 +232,10 @@ class screen(object):
 
 		self.in_machine_num = 0
 
-		self.coordinate_deter()
-		self.food_init()
-		self.machine_init()
+		self.initial()
 
-		# an interesting function...
-		# self.plot()
-
-
-	def food_init(self):
-		self.food = np.zeros((self.x_num,self.y_num))
-		for i in range(self.x_num):
-			for j in range(self.y_num):
-				if self.map_dict[i,j] == '*':
-					#no food
-					continue
-				elif self.map_dict[i,j] == 'm':
-					# machine
-					self.food[i,j] = np.random.random()*10
-				elif self.map_dict[i,j] == 'q':
-					#circle
-					self.food[i,j] = np.random.random()*5
-				else:
-					#square
-					self.food[i,j] = np.random.random()*2
-
+	# an interesting function...
+	# self.plot()
 
 	def eva(self, pos, eat_num):
 		# when the coordinate is 200,200//10=20, which is out of the index(19)
@@ -284,15 +249,6 @@ class screen(object):
 			self.food[x_coor, y_coor] = 0
 		return self.food[x_coor, y_coor]
 
-	def machine_init(self):
-		"""
-		randomly generate some position to set machine
-		:return:
-		"""
-		self.machines = []
-		for x,y in self.machines_coordinates:
-			self.machines.append(Machine(x, y,self.step))
-
 	def update(self):
 		"""
 		the food is increasing with a fixed speed
@@ -304,60 +260,115 @@ class screen(object):
 
 		self.in_machine_num = 0
 
-
-
-	def coordinate_deter(self):
-		map = ['* * * * * * * * * * * * + + + + + + + +',
-			   '* * * * * * * * * * * * + + q + + + + +',
-			   '* * * * * * * * * * * * + + + + + + + +',
-			   '* * * * * * * * * * * * + + + + + + + +',
-			   '* * * * * * * * * * * * + + + + + + + +',
-			   '* * * * * * * * * * * * + + + + + + + +',
-			   '+ + + + + + + + + + + + + q q + + + + +',
-			   '+ + + + + + + + + + + + + + + + + + + +',
-			   '+ + + + + + + f f + + f + q q + + + + +',
-			   '+ + + + + + + f + + + + + + + + + + + +',
-			   '+ + + + m + + f + + + m + q q + + + + +',
-			   '+ + + + + + + + + + + + + + + + + + + +',
-			   '+ + + + + + + + + f + + + q q + + + + +',
-			   '+ + + + + + + + + + + + + + + + + + + +',
-			   '+ + + + + f + + + + + + + q q + + + + q',
-			   '+ + + + m f + + + + + m + + + + + + f +',
-			   '+ + + + + + + + + + + + + + + + + + + q',
-			   '+ + + + + + + + + + + + f + + + + + + +',
-			   '+ + + + + + + + + + + + + + + + + + + +',
-			   '+ + + + + + + + + + + + q q q + + + + +']
+	def initial(self):
+		map_1 = ['* * * * * * * * * * * * + + + + + + + +',
+				 '* * * * * * * * * * * * + + q + + + + +',
+				 '* * * * * * * * * * * * + + + + + + + +',
+				 '* * * * * * * * * * * * + + + + + + + +',
+				 '* * * * * * * * * * * * + + + + + + + +',
+				 '* * * * * * * * * * * * + + + + + + + +',
+				 '+ + + + + + + + + + + + + q q + + + + +',
+				 '+ + + + + + + + + + + + + + + + + + + +',
+				 '+ + + + + + + f f + + f + q q + + + + +',
+				 '+ + + + + + + f + + + + + + + + + + + +',
+				 '+ + + + m + + f + + + m + q q + + + + +',
+				 '+ + + + + + + + + + + + + + + + + + + +',
+				 '+ + + + + + + + + f + + + q q + + + + +',
+				 '+ + + + + + + + + + + + + + + + + + + +',
+				 '+ + + + + f + + + + + + + q q + + + + q',
+				 '+ + + + m f + + + + + m + + + + + + f +',
+				 '+ + + + + + + + + + + + + + + + + + + q',
+				 '+ + + + + + + + + + + + f + + + + + + +',
+				 '+ + + + + + + + + + + + + + + + + + + +',
+				 '+ + + + + + + + + + + + q q q + + + + +']
+		map_2 = ['* * * * * * * * * * * * 3 3 3 3 3 3 3 3',
+				 '* * * * * * * * * * * * 3 + + + + + + 3',
+				 '* * * * * * * * * * * * 3 + 4 4 4 + + 3',
+				 '* * * * * * * * * * * * 3 + 4 4 4 + + 3',
+				 '* * * * * * * * * * * * 3 + + + + + + 3',
+				 '* * * * * * * * * * * * 3 2 2 2 2 2 2 3',
+				 '3 3 3 3 3 3 3 3 3 3 3 3 3 + + + + + + 3',
+				 '3 + + + + + + + + + + + + + + + + + + 3',
+				 '3 + 2 2 2 2 + 4 4 + + 4 + 4 4 + 4 + + 3',
+				 '3 + 2 + 4 + + 4 + 4 + 4 + 4 4 + 4 + + 3',
+				 '3 + 2 4 4 4 + 4 + 4 4 4 4 4 4 + + + + 3',
+				 '3 + 2 + 4 + + + + 4 + 4 + 4 4 + 4 + + 3',
+				 '3 + 2 + + + + + + 4 + + + 4 4 + 4 + + 3',
+				 '3 + 2 + + + + + + 4 + + + 4 4 + + + + 3',
+				 '3 + 2 + 4 4 + 2 + 4 + 4 + + + + + + + 3',
+				 '3 + 2 4 4 4 + 2 + 4 4 4 4 2 2 + 4 + 4 3',
+				 '3 + 2 + 4 4 + 2 + 4 + 4 + + + + 4 + 4 3',
+				 '3 + + + + + + 2 + + + + 4 4 4 + 2 2 2 3',
+				 '3 + + 2 2 2 + + + + + + 4 4 4 4 + + + 3',
+				 '3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3']
 
 		self.map_dict = {}
-		self.machines_coordinates = []
+		self.food = np.zeros((self.x_num, self.y_num))
 		for i in range(self.x_num):
-			temp = map[i].split(' ')
+			temp = map_2[i].split(' ')
 			for j in range(self.y_num):
-				self.map_dict[(i,j)] = temp[j]
-				if self.map_dict[(i,j)] == 'm':
-					self.machines_coordinates.append((i,j))
+				if temp[j] == '*':
+					continue
+				elif temp[j] == '+':
+					self.food[i, j] = np.exp(max(0, np.random.normal(0, 1)))
+				elif temp[j] == '2':
+					self.food[i, j] = np.exp(max(0, np.random.normal(1, 1)))
+				elif temp[j] == '3':
+					self.food[i, j] = np.exp(max(0, np.random.normal(2, 1)))
+				elif temp[j] == '4':
+					self.food[i, j] = np.exp(max(0, np.random.normal(3, 1)))
+
+		temp = [[0 for _ in range(self.y_num)] for _ in range(self.y_num)]
+		indexes = []
+		for i in range(self.x_num):
+			t = map_1[i].split(' ')
+			for j in range(self.y_num):
+				if t[j] == 'm':
+					temp[i][j] = 0.65
+					indexes.append((i, j))
+				elif t[j] == 'f':
+					temp[i][j] = 0.5
+					indexes.append((i, j))
+				elif t[j] == 'q':
+					temp[i][j] = 0.55
+					indexes.append((i, j))
+
+		def bfs(index):
+
+			queue = [index]
+			dic = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+			while queue:
+				ii, jj = queue.pop(0)
+				for d in dic:
+					if 0 <= ii + d[0] <= 19 and 0 <= jj + d[1] <= 19 and temp[ii][jj] >= 0.1 and temp[ii][jj] - 0.1 > \
+							temp[ii + d[0]][jj + d[1]] and not (ii + d[0] <= 5 and jj + d[1] <= 11):
+						temp[ii + d[0]][jj + d[1]] = temp[ii][jj] - 0.1
+						queue.append((ii + d[0], jj + d[1]))
+
+		for index in indexes:
+			bfs(index)
+
+		tt = []
+		for ttt in temp:
+			tt.append(list(map(lambda x: round(x, 2), ttt)))
+		self.capture_prob = np.array(tt)
 
 	def plot(self):
-		vlines = np.linspace(0,2,self.x_num+1)
-		hlines = np.linspace(0,2,self.y_num+1)
+		vlines = np.linspace(0, 2, self.x_num + 1)
+		hlines = np.linspace(0, 2, self.y_num + 1)
 
-		plt.hlines(hlines,min(hlines),max(hlines))
-		plt.vlines(vlines,min(vlines),max(vlines))
+		plt.hlines(hlines, min(hlines), max(hlines))
+		plt.vlines(vlines, min(vlines), max(vlines))
 
-		xs, ys = np.meshgrid(vlines[1:],hlines[:-1])
+		xs, ys = np.meshgrid(vlines[1:], hlines[:-1])
 
-		for i,(x,y) in enumerate(zip(xs.flatten(),ys.flatten()[::-1])):
-			t_x = i//self.x_num
-			t_y = i%self.x_num
-			plt.text(x,y,self.map_dict[t_x,t_y],horizontalalignment='right',verticalalignment='bottom')
+		for i, (x, y) in enumerate(zip(xs.flatten(), ys.flatten()[::-1])):
+			t_x = i // self.x_num
+			t_y = i % self.x_num
+			plt.text(x, y, self.map_dict[t_x, t_y], horizontalalignment='right', verticalalignment='bottom')
 		plt.axis('off')
 
 		plt.show()
-
-
-
-
-
 
 
 class Individual(object):
@@ -395,7 +406,7 @@ class Individual(object):
 
 
 class populations(object):
-	def __init__(self, pop_num,x_num,y_num):
+	def __init__(self, pop_num, x_num, y_num):
 		self.pop_num = pop_num
 		self.pops = []
 		self.fronts = []
@@ -405,15 +416,15 @@ class populations(object):
 		self.crossover_num = pop_num
 		self.mutation_num = pop_num
 
-		#Todo apple the surrogate model
+		# Todo apple the surrogate model
 		self.surrogate_model = surrogate_net()
 		self.surrogate_model.load_state_dict(torch.load('surrogate_model/surrogate_model_parameters.pkl'))
 
 	def initial(self):
 		for _ in range(self.pop_num):
 			temp_x = np.random.rand(self.x_num, self.y_num)
-			temp_y = np.random.rand(self.x_num,self.y_num)
-			index = temp_x>temp_y
+			temp_y = np.random.rand(self.x_num, self.y_num)
+			index = temp_x > temp_y
 			temp_x[:].fill(0)
 			temp_x[index] = 1
 
@@ -425,10 +436,9 @@ class populations(object):
 		:param pop: entity.Individual
 		:return:
 		"""
-		#Todo transoforme the np array to tensor
+		# Todo transoforme the np array to tensor
 		input = pop.x
-		pop.objective = sum(pop.x),self.surrogate_model(input)
-
+		pop.objective = sum(pop.x), self.surrogate_model(input)
 
 	def fast_dominated_sort(self):
 		self.fronts = [[]]
@@ -485,8 +495,8 @@ class populations(object):
 		:return:
 		"""
 		for _ in range(self.crossover_num):
-			index = np.random.rand(self.x_num,self.y_num)<np.random.rand(self.x_num,self.y_num)
-			parents1,parents2 = random.choices(self.pops, k=2)
+			index = np.random.rand(self.x_num, self.y_num) < np.random.rand(self.x_num, self.y_num)
+			parents1, parents2 = random.choices(self.pops, k=2)
 			temp1 = parents1.x[:]
 			temp2 = parents2.x[:]
 			temp1[index] = parents2[index]
@@ -497,9 +507,9 @@ class populations(object):
 			self.evaluate(self.pops[-1])
 
 		for pop in self.pops:
-			index = np.random.rand(self.x_num,self.y_num)<np.full((self.x_num,self.y_num),0.1)
+			index = np.random.rand(self.x_num, self.y_num) < np.full((self.x_num, self.y_num), 0.1)
 			temp = pop.x[:]
-			temp[index] = 1-temp[index]
+			temp[index] = 1 - temp[index]
 			self.pops.append(Individual(temp))
 			self.evaluate(self.pops[-1])
 

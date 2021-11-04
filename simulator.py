@@ -72,11 +72,11 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 
 
 def matrix_generate(x, y, step, test=True):
-	print(test)
 	x_num = x // step + 1
 	y_num = y // step + 1
 
 	matrix = [[0] * y_num for _ in range(x_num)]
+
 
 	if test:
 		for i in range(x_num):
