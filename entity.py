@@ -33,7 +33,7 @@ class insect(object):
 		self.status = True
 		self.stand_in_same_place = 0
 
-		self.eat_num = 0.1
+		self.eat_num = 0.05
 
 	def update(self, global_best, env, traps):
 
@@ -104,6 +104,7 @@ class insect(object):
 		probability = env.capture_prob[pos[0], pos[1]]
 		e_t = np.exp(self.stand_in_same_place)
 		probability = (e_t + probability) / (1 + e_t + probability)
+		probability = probability*0.1
 		temp_random = np.random.random()
 		if temp_random < probability:
 			self.status = False
@@ -157,6 +158,7 @@ class insect_population(object):
 			temp.best_fit = temp.fitness
 			temp.living_test(traps)
 			if not temp.status:
+				self.env.in_trap_num += 1
 				continue
 
 			self.populations.append(temp)
@@ -231,6 +233,7 @@ class screen(object):
 		self.y_num = width // step
 
 		self.in_machine_num = 0
+		self.in_trap_num = 0
 
 		self.initial()
 
@@ -256,7 +259,7 @@ class screen(object):
 		"""
 		for i in range(self.x_num):
 			for j in range(self.y_num):
-				self.food[i, j] += random.random() * 2 + 1
+				self.food[i, j] += 0.5
 
 		self.in_machine_num = 0
 

@@ -68,7 +68,7 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 		if day_count == iteration:
 			break
 
-	return in_machine_nums
+	return in_machine_nums,pops.env.in_trap_num
 
 
 def matrix_generate(x, y, step, test=True):
@@ -158,13 +158,14 @@ def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 
 		matrix = matrix_generate(env.x, env.y, env.step, False)
 		new_insect_pops = copy.deepcopy(pops)
-		insects_in_machine = simulate(matrix, insect_iteration, new_insect_pops)
+		insects_in_machine,insects_in_trap = simulate(matrix, insect_iteration, new_insect_pops)
 		probaility = prob_cal(insects_in_machine)
 
 		n = len(data)
 		data[n] = {}
 		data[n]['sample'] = matrix
 		data[n]['label'] = insects_in_machine
+		data[n]['captured'] = insects_in_trap
 
 		with open('surrogate_model/data_sample.pkl', 'wb') as pkl:
 			pickle.dump(data, pkl)
