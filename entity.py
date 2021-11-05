@@ -102,9 +102,9 @@ class insect(object):
 
 	def in_machine(self, pos, env):
 		probability = env.capture_prob[pos[0], pos[1]]
-		e_t = np.exp(self.stand_in_same_place)
+		e_t = np.exp(self.stand_in_same_place/100)
 		probability = (e_t + probability) / (1 + e_t + probability)
-		probability = probability*0.1
+		# probability = probability*0.1
 		temp_random = np.random.random()
 		if temp_random < probability:
 			self.status = False
@@ -327,13 +327,13 @@ class screen(object):
 			t = map_1[i].split(' ')
 			for j in range(self.y_num):
 				if t[j] == 'm':
-					temp[i][j] = 0.65
+					temp[i][j] = 0.2
 					indexes.append((i, j))
 				elif t[j] == 'f':
-					temp[i][j] = 0.5
+					temp[i][j] = 0.05
 					indexes.append((i, j))
 				elif t[j] == 'q':
-					temp[i][j] = 0.55
+					temp[i][j] = 0.15
 					indexes.append((i, j))
 
 		def bfs(index):
@@ -343,9 +343,9 @@ class screen(object):
 			while queue:
 				ii, jj = queue.pop(0)
 				for d in dic:
-					if 0 <= ii + d[0] <= 19 and 0 <= jj + d[1] <= 19 and temp[ii][jj] >= 0.1 and temp[ii][jj] - 0.1 > \
+					if 0 <= ii + d[0] <= 19 and 0 <= jj + d[1] <= 19 and temp[ii][jj] >= 0.02 and temp[ii][jj] - 0.02 > \
 							temp[ii + d[0]][jj + d[1]] and not (ii + d[0] <= 5 and jj + d[1] <= 11):
-						temp[ii + d[0]][jj + d[1]] = temp[ii][jj] - 0.1
+						temp[ii + d[0]][jj + d[1]] = temp[ii][jj] - 0.02
 						queue.append((ii + d[0], jj + d[1]))
 
 		for index in indexes:
