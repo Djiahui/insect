@@ -1,14 +1,14 @@
 class Parameters(object):
-	prob_m = 0.65
-	prob_f = 0.55
-	prob_q = 0.5
+	prob_m = 0
+	prob_f = 0
+	prob_q = 0
 
 	insect_num = 10
 	x = 200
 	y = 200
 	step = 10
 	sample_num = 500
-	insect_iteration = 20
+	insect_iteration = 360
 	pop_num = 10
 
 

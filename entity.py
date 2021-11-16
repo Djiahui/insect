@@ -112,7 +112,7 @@ class insect(object):
 		probability = env.capture_prob[pos[0], pos[1]]
 		e_t = np.exp(self.stand_in_same_place/100)
 		probability = (e_t + probability) / (1 + e_t + probability)
-		# probability = probability*0.1
+		probability = 0
 		temp_random = np.random.random()
 		if temp_random < probability:
 			self.status = False
@@ -188,13 +188,17 @@ class insect_population(object):
 		"""
 
 		current_num = len(self.populations)
-		if not current_num:
-			return
+
 
 		input = torch.tensor([current_num] + temp)
-		predict_num = int(self.regression_model(input).item())+1
+		temp_num = self.regression_model(input).item()
+		predict_num = (int(temp_num)+1) if temp_num else 0
+		# predict_num = int(self.regression_model(input).item())+1
 		to_generate_num = max(0, predict_num - current_num)
 		self.generate(traps, to_generate_num)
+
+		if not self.populations:
+			return
 
 		for temp in self.populations:
 			temp.update(self.global_best, self.env, traps)
