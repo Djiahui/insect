@@ -7,6 +7,7 @@ import random
 import torch
 from data_from_sim.predict_net import pre_net
 from surrogate_model.surrogate_model import surrogate_net
+from parameters import Parameters
 
 
 class insect(object):
@@ -27,6 +28,8 @@ class insect(object):
 		else:
 			self.rate = 4
 
+		self.age = 0
+
 		self.best_pos = np.zeros(2)
 		self.best_fit = None
 		self.fitness = None
@@ -36,6 +39,11 @@ class insect(object):
 		self.eat_num = 0.05
 
 	def update(self, global_best, env, traps):
+
+		self.age += 1
+		if self.age>=14:
+			self.status = False
+			return
 
 		temp1 = self.best_pos - self.pos
 		temp2 = global_best.pos - self.pos
@@ -184,7 +192,7 @@ class insect_population(object):
 			return
 
 		input = torch.tensor([current_num] + temp)
-		predict_num = round(self.regression_model(input).item())
+		predict_num = int(self.regression_model(input).item())+1
 		to_generate_num = max(0, predict_num - current_num)
 		self.generate(traps, to_generate_num)
 
@@ -307,6 +315,7 @@ class screen(object):
 
 		self.map_dict = {}
 		self.food = np.zeros((self.x_num, self.y_num))
+
 		for i in range(self.x_num):
 			temp = map_2[i].split(' ')
 			for j in range(self.y_num):
@@ -321,40 +330,53 @@ class screen(object):
 				elif temp[j] == '4':
 					self.food[i, j] = np.exp(max(0, np.random.normal(3, 1)))
 
-		temp = [[0 for _ in range(self.y_num)] for _ in range(self.y_num)]
-		indexes = []
+		#不做广度搜索的版本（没有边际递减的）
+		self.capture_prob = np.zeros((self.x_num, self.y_num))
 		for i in range(self.x_num):
-			t = map_1[i].split(' ')
+			temp = map_1[i].split(' ')
 			for j in range(self.y_num):
-				if t[j] == 'm':
-					temp[i][j] = 0.2
-					indexes.append((i, j))
-				elif t[j] == 'f':
-					temp[i][j] = 0.05
-					indexes.append((i, j))
-				elif t[j] == 'q':
-					temp[i][j] = 0.15
-					indexes.append((i, j))
+				if temp[j] == 'm':
+					self.capture_prob[i,j] = Parameters.prob_m
+				elif temp[j] == 'f':
+					self.capture_prob[i,j] = Parameters.prob_f
+				elif temp[j] == 'q':
+					self.capture_prob[i,j] = Parameters.prob_q
 
-		def bfs(index):
-
-			queue = [index]
-			dic = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-			while queue:
-				ii, jj = queue.pop(0)
-				for d in dic:
-					if 0 <= ii + d[0] <= 19 and 0 <= jj + d[1] <= 19 and temp[ii][jj] >= 0.02 and temp[ii][jj] - 0.02 > \
-							temp[ii + d[0]][jj + d[1]] and not (ii + d[0] <= 5 and jj + d[1] <= 11):
-						temp[ii + d[0]][jj + d[1]] = temp[ii][jj] - 0.02
-						queue.append((ii + d[0], jj + d[1]))
-
-		for index in indexes:
-			bfs(index)
-
-		tt = []
-		for ttt in temp:
-			tt.append(list(map(lambda x: round(x, 2), ttt)))
-		self.capture_prob = np.array(tt)
+		#有广度搜索的（边际递减）
+		# temp = [[0 for _ in range(self.y_num)] for _ in range(self.y_num)]
+		# indexes = []
+		# for i in range(self.x_num):
+		# 	t = map_1[i].split(' ')
+		# 	for j in range(self.y_num):
+		# 		if t[j] == 'm':
+		# 			temp[i][j] = 0.2
+		# 			indexes.append((i, j))
+		# 		elif t[j] == 'f':
+		# 			temp[i][j] = 0.05
+		# 			indexes.append((i, j))
+		# 		elif t[j] == 'q':
+		# 			temp[i][j] = 0.15
+		# 			indexes.append((i, j))
+		#
+		# def bfs(index):
+		#
+		# 	queue = [index]
+		# 	dic = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+		# 	while queue:
+		# 		ii, jj = queue.pop(0)
+		# 		for d in dic:
+		# 			if 0 <= ii + d[0] <= 19 and 0 <= jj + d[1] <= 19 and temp[ii][jj] >= 0.02 and temp[ii][jj] - 0.02 > \
+		# 					temp[ii + d[0]][jj + d[1]] and not (ii + d[0] <= 5 and jj + d[1] <= 11):
+		# 				temp[ii + d[0]][jj + d[1]] = temp[ii][jj] - 0.02
+		# 				queue.append((ii + d[0], jj + d[1]))
+		#
+		# for index in indexes:
+		# 	bfs(index)
+		#
+		# tt = []
+		# for ttt in temp:
+		# 	tt.append(list(map(lambda x: round(x, 2), ttt)))
+		# self.capture_prob = np.array(tt)
 
 	def plot(self):
 		vlines = np.linspace(0, 2, self.x_num + 1)

@@ -167,7 +167,7 @@ def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 		data[n]['label'] = insects_in_machine
 		data[n]['captured'] = insects_in_trap
 
-		with open('surrogate_model/data_sample.pkl', 'wb') as pkl:
+		with open('surrogate_model/data_sample2.pkl', 'wb') as pkl:
 			pickle.dump(data, pkl)
 
 

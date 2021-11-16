@@ -6,6 +6,7 @@ import numpy as np
 import nds
 import matplotlib.pyplot as plt
 import simulator
+from parameters import Parameters
 
 
 def main(x, y, step, insect_num, sample_num, insect_iteration, pop_num, train=True):
@@ -39,11 +40,4 @@ def draw(population):
 
 
 if __name__ == '__main__':
-	x = 200
-	y = 200
-	step = 10
-	insect_num = 1000
-	sample_num = 500
-	insect_iteration = 20
-	pop_num = 10
-	main(x, y, step, insect_num, sample_num, insect_iteration, pop_num)
+	main(Parameters.x, Parameters.y, Parameters.step, Parameters.insect_num, Parameters.sample_num, Parameters.insect_iteration, Parameters.pop_num)
