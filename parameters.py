@@ -3,7 +3,7 @@ class Parameters(object):
 	prob_f = 0
 	prob_q = 0
 
-	insect_num = 10
+	insect_num = 13
 	x = 200
 	y = 200
 	step = 10

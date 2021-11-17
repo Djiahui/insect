@@ -150,7 +150,7 @@ class insect_population(object):
 		self.dead_num = 0
 
 		self.regression_model = pre_net()
-		self.regression_model.load_state_dict(torch.load('data_from_sim/regression_model_parameters.pkl'))
+		self.regression_model.load_state_dict(torch.load('data_from_sim/regression_model_parameters_non_linear.pkl'))
 
 	def generate(self, traps, num=None):
 		if num == None:
@@ -189,8 +189,8 @@ class insect_population(object):
 
 		current_num = len(self.populations)
 
-
-		input = torch.tensor([current_num] + temp)
+		input = torch.tensor([current_num] + [sum(temp) / len(temp)])
+		# input = torch.tensor([current_num] + temp)
 		temp_num = self.regression_model(input).item()
 		predict_num = (int(temp_num)+1) if temp_num else 0
 		# predict_num = int(self.regression_model(input).item())+1
