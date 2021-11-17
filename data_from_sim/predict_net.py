@@ -89,12 +89,12 @@ def main():
 	net = pre_net()
 	loss_fun = torch.nn.MSELoss()
 
-	optim = torch.optim.Adam(net.parameters(),0.001)
+	optim = torch.optim.Adam(net.parameters(),0.0001)
 
 	for ep in range(1000):
 		train_loss = train(net,dataloader_train,loss_fun,optim)
 		test_loss = eval(net,dataloader_test,loss_fun)
-		print(test_loss)
+		print(test_loss/test_num)
 	torch.save(net.state_dict(),'regression_model_parameters_non_linear.pkl')
 
 if __name__ == "__main__":
