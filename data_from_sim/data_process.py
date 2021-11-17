@@ -1,5 +1,23 @@
 import pickle
 
+def write_in_csv():
+	i = 0
+	with open('result.csv','w') as f:
+
+		for line in open('Output_Results.txt'):
+			if i<1:
+				i+=1
+				continue
+
+			if i==1:
+				temp = line.split('\t')
+				i+=1
+			else:
+				temp = line.split(' ')
+				temp = [temp[0]] + temp[1].split('\t')
+			temp = ','.join(temp)
+			f.write(temp)
+
 def result_collect(path):
 	i = 0
 	data_days = {}
@@ -64,8 +82,31 @@ def temp_data_collect():
 
 	with open('temperature_data','wb') as pkl2:
 		pickle.dump(temperature_data,pkl2)
+# def two_dimension_data_process():
+# 	#温度只考虑十二点的温度的版本
+# 	i = 0
+#
+# 	for line in open('Output_Results.txt'):
+# 		if i<2:
+# 			i+=1
+# 			continue
+# 		time = line.split(' ')[0]
+# 		temp = line.split(' ')[1]
+# 		data = temp.split('\t')
+# 		data = data[2:]
+def only_adult_1():
+	#只要adult1的数据
+	adults_1_only = {}
+	with open('data_adults','rb') as pkl:
+		data = pickle.load(pkl)
 
+		n = len(data)
+
+		for i in range(0,n,5):
+			m = len(adults_1_only)
+			adults_1_only[m] = {}
+			adults_1_only[m] = data[i]
+	with open('data_adults_only_1','wb') as pkl2:
+		pickle.dump(adults_1_only,pkl2)
 if __name__ == "__main__":
-	temp_data_collect()
-	exit()
-	data_filter('final_data_new')
+	only_adult_1()

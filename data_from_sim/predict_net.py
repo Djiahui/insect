@@ -8,11 +8,22 @@ torch.manual_seed(1234)
 class pre_net(nn.Module):
 	def __init__(self):
 		super(pre_net, self).__init__()
-		self.linear = nn.Linear(25,1)
+		self.l = nn.Sequential(nn.Linear(2,16),
+							   nn.ReLU(),
+							   nn.Linear(16,1))
+		# self.seq = nn.Sequential(nn.Linear(25,64),
+		# 						 nn.ReLU(),
+		# 						 nn.Linear(64,32),
+		# 						 nn.ReLU(),
+		# 						 nn.Linear(32,16),
+		# 						 nn.ReLU(),
+		# 						 nn.Linear(16,8),
+		# 						 nn.ReLU(),
+		# 						 nn.Linear(8,1))
 	def forward(self,input):
-		out = self.linear(input)
 
-		return out
+
+		return self.l(input)
 
 class data_set(Dataset):
 	def __init__(self):
@@ -26,55 +37,65 @@ class data_set(Dataset):
 		temp = self.data[index]
 
 		start = torch.tensor(temp['start'])
-		wendu = torch.tensor(temp['temp'])
+		wendu = torch.tensor(temp['temp']).mean()
 		target = torch.tensor(temp['target'])
 
 		return {'start':start,'temp':wendu,'target':target}
+def train(net,train_loader,loss_fun,optim):
+	total_loss = []
+	for _,data in enumerate(train_loader):
+		s = data['start']
+		temp = data['temp']
+		target = data['target'].view(-1, 1)
+
+		sample = torch.cat((s.view(-1, 1), temp.view(-1,1)), 1)
+		predict_number = net(sample)
+		loss = loss_fun(predict_number, target)
+
+
+		optim.zero_grad()
+		loss.backward()
+		optim.step()
+
+		total_loss.append(loss.item())
+	return torch.tensor(total_loss).mean().item()
+def eval(net,test_loader,loss_fun):
+	total_loss = []
+	for _, data in enumerate(test_loader):
+		s_test = data['start']
+		temp_test = data['temp']
+		target_test = data['target'].view(-1, 1)
+
+		sample_test = torch.cat((s_test.view(-1, 1), temp_test.view(-1,1)), 1)
+		predict_number_test = net(sample_test)
+		loss_test = loss_fun(predict_number_test, target_test).item()
+
+		total_loss.append(loss_test)
+
+	return torch.tensor(total_loss).mean().item()
+
 
 def main():
 	dataset = data_set()
-	dataloader = DataLoader(dataset,64,shuffle=True)
-	# n = len(dataset)
-	# train_num = int(n * 0.85)
-	# test_num = n - train_num
-	# train_data, test_data = torch.utils.data.random_split(dataset, [train_num, test_num])
-	#
-	# dataloader_train = DataLoader(train_data,64,shuffle=True)
-	# dataloader_test = DataLoader(train_data,64,shuffle=True)
+	# dataloader = DataLoader(dataset,256,shuffle=True)
+	n = len(dataset)
+	train_num = int(n * 0.85)
+	test_num = n - train_num
+	train_data, test_data = torch.utils.data.random_split(dataset, [train_num, test_num])
+
+	dataloader_train = DataLoader(train_data,256,shuffle=True)
+	dataloader_test = DataLoader(train_data,test_num,shuffle=True)
 
 	net = pre_net()
-	loss_fun = torch.nn.SmoothL1Loss()
+	loss_fun = torch.nn.MSELoss()
 
-	optim = torch.optim.Adam(net.parameters(),0.1)
+	optim = torch.optim.Adam(net.parameters(),0.001)
 
-	for batch_th in range(10):
-		for ith,data in enumerate(dataloader):
-			s = data['start']
-			temp = data['temp']
-			target = data['target'].view(-1,1)
-
-			sample = torch.cat((s.view(-1,1),temp),1)
-			predict_number = net(sample)
-			loss = loss_fun(predict_number,target)
-
-			optim.zero_grad()
-			loss.backward()
-			optim.step()
-
-			if not ith//10:
-				local_loss = []
-				for _, data  in enumerate(dataloader):
-					s_test = data['start']
-					temp_test = data['temp']
-					target_test = data['target'].view(-1,1)
-
-					sample_test = torch.cat((s_test.view(-1,1), temp_test), 1)
-					predict_number_test = net(sample_test)
-					loss_test = loss_fun(predict_number_test, target_test).item()
-
-					local_loss.append(loss_test)
-				print(torch.tensor(local_loss).mean().item()/dataset.__len__())
-	torch.save(net.state_dict(),'regression_model_parameters.pkl')
+	for ep in range(1000):
+		train_loss = train(net,dataloader_train,loss_fun,optim)
+		test_loss = eval(net,dataloader_test,loss_fun)
+		print(test_loss)
+	torch.save(net.state_dict(),'regression_model_parameters_non_linear.pkl')
 
 if __name__ == "__main__":
 	main()
