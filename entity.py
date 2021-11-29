@@ -8,7 +8,7 @@ import torch
 from data_from_sim.predict_net import pre_net
 from surrogate_model.surrogate_model import surrogate_net
 from parameters import Parameters
-
+import simulator
 
 class insect(object):
 	def __init__(self, x, y, pos=None, direction=None, rate=None):
@@ -112,7 +112,7 @@ class insect(object):
 		probability = env.capture_prob[pos[0], pos[1]]
 		e_t = np.exp(self.stand_in_same_place/100)
 		probability = (e_t + probability) / (1 + e_t + probability)
-		probability = 0
+		probability = probability * Parameters.insect_fall_machine
 		temp_random = np.random.random()
 		if temp_random < probability:
 			self.status = False
@@ -445,9 +445,11 @@ class populations(object):
 		self.crossover_num = pop_num
 		self.mutation_num = pop_num
 
+		self.insect_population = None
+
 		# Todo apple the surrogate model
-		self.surrogate_model = surrogate_net()
-		self.surrogate_model.load_state_dict(torch.load('surrogate_model/surrogate_model_parameters.pkl'))
+		# self.surrogate_model = surrogate_net()
+		# self.surrogate_model.load_state_dict(torch.load('surrogate_model/surrogate_model_parameters.pkl'))
 
 	def initial(self):
 		for _ in range(self.pop_num):

@@ -1,7 +1,11 @@
 import pickle
 from tqdm import tqdm
+import os
 with open('surrogate_model/data_sample.pkl','rb') as pkl:
 	temp = pickle.load(pkl)
+
+if os.path.exists('surrogate_model\data.csv'):
+	os.remove('surrogate_model\data.csv')
 
 with open('surrogate_model/data.csv','w') as f:
 	temp_s = 'order'

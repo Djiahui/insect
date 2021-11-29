@@ -7,7 +7,7 @@ from tqdm import tqdm
 import entity
 import pickle
 import os
-
+from parameters import Parameters
 
 def draw(pops, traps,day_count):
 	"""
@@ -37,7 +37,7 @@ def trap_generate(matrix, x, y, step):
 	traps = []
 	for i in range(x_num):
 		for j in range(y_num):
-			if matrix[i][j]:
+			if matrix[i,j]:
 				traps.append(entity.trap([i * step, j * step]))
 
 	return traps
@@ -74,23 +74,16 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 
 
 def matrix_generate(x, y, step, test=True):
+	if test:
+		with open('matrix_test.pkl','rb') as pkl:
+			matrix = pickle.load(pkl)
+		return np.array(matrix)
+
+
 	x_num = x // step + 1
 	y_num = y // step + 1
 
 	matrix = [[0] * y_num for _ in range(x_num)]
-
-
-	if test:
-		for i in range(x_num):
-			# left to right
-			for j in range(y_num):
-				# from bottom to top
-				# only for current screen
-				if i < 6 and j < 12:
-					continue
-				if random.random() < 0.05:
-					matrix[i][j] = 1
-		return matrix
 	temp = np.random.rand()
 	if temp < 0.2:
 		for i in range(x_num):
@@ -138,7 +131,7 @@ def matrix_generate(x, y, step, test=True):
 				r2 = np.random.rand()
 				if r2 < r1:
 					matrix[i][j] = 1
-	return matrix
+	return np.array(matrix)
 
 
 def prob_cal(insect_in_machine):
@@ -147,7 +140,7 @@ def prob_cal(insect_in_machine):
 
 def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 	env = entity.screen(x, y, step)
-	pops = entity.insect_population(insect_num, copy.deepcopy(env))
+	# pops = entity.insect_population(insect_num, copy.deepcopy(env))
 
 	# for _ in range(sample_num):
 	for _ in tqdm(range(sample_num)):
@@ -158,8 +151,12 @@ def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 		with open('surrogate_model\data_sample.pkl', 'rb') as pkl1:
 			data = pickle.load(pkl1)
 
-		matrix = matrix_generate(env.x, env.y, env.step, False)
-		matrix = [[0 for _ in range(21)] for _ in range(21)]
+		pops = entity.insect_population(Parameters().get_random_insect_number(), copy.deepcopy(env))
+		matrix = matrix_generate(env.x, env.y, env.step, Parameters.test)
+		# no traps
+		# matrix = [[0 for _ in range(21)] for _ in range(21)]
+		# one matrix for testing
+
 		new_insect_pops = copy.deepcopy(pops)
 		insects_in_machine,insects_in_trap,insect_nums = simulate(matrix, insect_iteration, new_insect_pops)
 		probaility = prob_cal(insects_in_machine)
@@ -174,8 +171,6 @@ def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 		with open('surrogate_model/data_sample.pkl', 'wb') as pkl:
 			pickle.dump(data, pkl)
 
-
-		break
 
 
 

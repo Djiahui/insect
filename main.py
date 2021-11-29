@@ -18,9 +18,11 @@ def main(x, y, step, insect_num, sample_num, insect_iteration, pop_num, train=Tr
 
 
 def optimize(pop_num):
+
 	population = entity.populations(pop_num,21,21)
 	population.initial()
 	for _ in range(10):
+		insect_population = entity.insect_population(Parameters.get_random_insect_number())
 		population.offspring_generate()
 		population.fast_dominated_sort()
 		population.crowding_distance()
