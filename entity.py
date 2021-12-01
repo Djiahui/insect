@@ -405,8 +405,8 @@ class Individual(object):
 	def __init__(self, x=None):
 		self.rank = None
 		self.crowding_distance = None
-		self.domination_count = None  # 这个解被支配的次数
-		self.dominated_solutions = None  # 被这个解支配的解
+		self.domination_count = 0 # 这个解被支配的次数
+		self.dominated_solutions = []  # 被这个解支配的解
 		self.x = x
 		self.objectives = None
 		self.traps = []
@@ -467,15 +467,18 @@ class populations(object):
 		:param pop: entity.Individual
 		:return:
 		"""
-		# Todo transoforme the np array to tensor
-		input = pop.x
-		pop.objective = sum(pop.x), self.surrogate_model(input)
+		in_machine_nums, _,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
+		probaility = [0 if not x else 1/(1+np.exp(-x)) for x in in_machine_nums]
+
+		cost = [1+Parameters.discount_q if x >Parameters.threshold else Parameters.discount_p for x in probaility]
+
+		final_loss = sum(cost)
+
+		pop.objectives = pop.x.sum(), final_loss
 
 	def fast_dominated_sort(self):
 		self.fronts = [[]]
 		for individual in self.pops:
-			individual.domination_count = 0
-			individual.dominated_solutions = []
 			for other_individual in self.pops:
 				if individual.dominates(other_individual):
 					individual.dominated_solutions.append(other_individual)
@@ -484,6 +487,7 @@ class populations(object):
 			if individual.domination_count == 0:
 				individual.rank = 0
 				self.fronts[0].append(individual)
+		# in next part the number of domination_count is changed to 0.
 		i = 0
 		while len(self.fronts[i]) > 0:
 			temp = []
@@ -528,21 +532,25 @@ class populations(object):
 		for _ in range(self.crossover_num):
 			index = np.random.rand(self.x_num, self.y_num) < np.random.rand(self.x_num, self.y_num)
 			parents1, parents2 = random.choices(self.pops, k=2)
-			temp1 = parents1.x[:]
-			temp2 = parents2.x[:]
-			temp1[index] = parents2[index]
-			temp2[index] = parents1[index]
+			temp1 = parents1.x.copy()
+			temp2 = parents2.x.copy()
+			temp1[index] = parents2.x[index]
+			temp2[index] = parents1.x[index]
 			self.pops.append(Individual(temp1))
 			self.evaluate(self.pops[-1])
 			self.pops.append(Individual(temp2))
 			self.evaluate(self.pops[-1])
 
+		count = 0
 		for pop in self.pops:
 			index = np.random.rand(self.x_num, self.y_num) < np.full((self.x_num, self.y_num), 0.1)
-			temp = pop.x[:]
+			temp = pop.x.copy()
 			temp[index] = 1 - temp[index]
 			self.pops.append(Individual(temp))
 			self.evaluate(self.pops[-1])
+			count += 1
+			if count  ==self.mutation_num:
+				break
 
 	def update(self):
 		self.pops = self.pops[:self.pop_num]

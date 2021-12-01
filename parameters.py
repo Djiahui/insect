@@ -13,8 +13,18 @@ class Parameters(object):
 	pop_num = 10
 	test = True
 	insect_fall_machine = 1
+
+	@classmethod
 	def get_random_insect_number(self):
-		return random.randint(1,500)
+		return random.randint(13,100)
+
+
+	threshold = 0.6
+	discount_q = 0.2
+	discount_p = 0.3
+
+	P = 2
+	Q = 5000
 
 
 if __name__ == '__main__':
