@@ -22,6 +22,8 @@ def optimize(pop_num):
 	population = entity.populations(pop_num,21,21)
 
 
+
+
 	insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
 	population.insect_population = insect_pops
 	population.initial()

@@ -555,6 +555,36 @@ class populations(object):
 	def update(self):
 		self.pops = self.pops[:self.pop_num]
 
+	def SOI_identify(self):
+		pass
+
+	def calcul_axy(self,ideal):
+		for pop in self.pops:
+			for other_pop in self.pops:
+				if pop==other_pop:
+					continue
+
+
+class Archive(object):
+	def __init__(self,maximum):
+		self.insect_population = None
+		self.pops = []
+		self.maximum = maximum
+
+	def evaluate(self, pop):
+
+		in_machine_nums, _, _ = simulator.simulate(pop.x, Parameters.insect_iteration,
+												   copy.deepcopy(self.insect_population))
+		probaility = [0 if not x else 1 / (1 + np.exp(-x)) for x in in_machine_nums]
+
+		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
+
+		final_loss = sum(cost)
+
+		pop.objectives = pop.x.sum(), final_loss
+
+
+
 
 if __name__ == '__main__':
 	pass
