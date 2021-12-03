@@ -14,6 +14,10 @@ class Parameters(object):
 	test = True
 	insect_fall_machine = 1
 
+
+	eliminated_number = 40
+	archive_maximum = 30
+	alpha = 0.8
 	@classmethod
 	def get_random_insect_number(self):
 		return random.randint(13,100)

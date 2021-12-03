@@ -410,6 +410,7 @@ class Individual(object):
 		self.x = x
 		self.objectives = None
 		self.traps = []
+		self.asf = 0
 
 	def __eq__(self, other):
 		if isinstance(self, other.__class__):
@@ -468,13 +469,19 @@ class populations(object):
 		:return:
 		"""
 		in_machine_nums, _,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
-		probaility = [0 if not x else 1/(1+np.exp(-x)) for x in in_machine_nums]
+		probaility = [0 if not x else 1/(2*(1+np.exp(-x))) for x in in_machine_nums]
 
-		cost = [1+Parameters.discount_q if x >Parameters.threshold else Parameters.discount_p for x in probaility]
+		cost = [1+Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
+
+		for index, pro in enumerate(probaility):
+			if not pro:
+				cost[index] = 0
 
 		final_loss = sum(cost)
+		#norm
+		final_loss /= (1+Parameters.discount_q)*Parameters.insect_iteration
 
-		pop.objectives = pop.x.sum(), final_loss
+		pop.objectives = pop.x.sum()/(self.x_num * self.y_num), final_loss
 
 	def fast_dominated_sort(self):
 		self.fronts = [[]]
@@ -549,20 +556,64 @@ class populations(object):
 			self.pops.append(Individual(temp))
 			self.evaluate(self.pops[-1])
 			count += 1
-			if count  ==self.mutation_num:
+			if count  == self.mutation_num:
 				break
 
 	def update(self):
 		self.pops = self.pops[:self.pop_num]
 
-	def SOI_identify(self):
-		pass
+	def SOI_identify(self,ideal):
+		eliminated = [False for _ in range(len(self.pops))]
 
-	def calcul_axy(self,ideal):
+		axy = self.axy_calcul(ideal)
+		eliminated_num = 0
+		while eliminated_num<Parameters.eliminated_number:
+			ii,jj = np.unravel_index(np.argmax(axy),axy.shape)
+			if not eliminated[ii] and not eliminated[jj]:
+				if self.pops[ii].asf<self.pops[jj].asf:
+					eliminated[jj] = True
+				else:
+					eliminated[ii] = True
+				eliminated_num += 1
+
+			axy[ii,jj] = 0
+
+		SOI = []
+		for index, flag in enumerate(eliminated):
+			if not flag:
+				SOI.append(copy.deepcopy(self.pops[index]))
+
+		return SOI
+
+
+
+	def axy_calcul(self,ideal):
+		n = len(self.pops)
+
+		axy = np.zeros((n,n))
+
+		for i in range(n):
+			for j in range(i+1,n):
+				x_1 = self.pops[i].objectives[0]-ideal[0]
+				x_2 = self.pops[i].objectives[1]-ideal[1]
+				y_1 = self.pops[j].objectives[0]-ideal[0]
+				y_2 = self.pops[j].objectives[1]-ideal[1]
+
+				axy[i,j] = ((x_1*y_1)+(x_2*y_2))/(np.sqrt(x_1**2+x_2**2)*np.sqrt(y_1**2+y_2**2))
+		return axy
+
+	def asf_calcul(self,ideal):
 		for pop in self.pops:
-			for other_pop in self.pops:
-				if pop==other_pop:
-					continue
+			f_sum = sum(pop.objectives)
+			w_1 = min(pop.objectives[0]/f_sum,1e-6)
+			w_2 = min(pop.objectives[1]/f_sum,1e-6)
+			f_1 = pop.objectives[0]-ideal[0]
+			f_2 = pop.objectives[1]-ideal[1]
+
+			pop.asf = max(f_1/w_1,f_2/w_2)
+
+
+
 
 
 class Archive(object):
@@ -582,6 +633,35 @@ class Archive(object):
 		final_loss = sum(cost)
 
 		pop.objectives = pop.x.sum(), final_loss
+
+	def update(self,SOIs,ideal):
+		for pop in self.pops:
+			self.evaluate(pop)
+
+		for pop in SOIs:
+			pop.m_diatance = abs(pop.objectives[0]-ideal[0])+abs(pop.objectives[1]-ideal[1])
+
+
+		archive_threshold = max([x.m_distance for x in SOIs])
+
+		new_pops = []
+
+		for pop in self.pops:
+			pop.m_diatance = abs(pop.objectives[0]-ideal[0])+abs(pop.objectives[1]-ideal[1])
+			if pop.m_diatance<archive_threshold*Parameters.alpha:
+				new_pops.append(pop)
+
+		if len(new_pops)+len(SOIs)>self.maximum:
+			new_pops.sort(key = lambda x:x.m_distance)
+			new_pops = new_pops[:self.maximum-len(SOIs)]
+
+		new_pops = new_pops + SOIs
+
+		self.pops = new_pops
+
+
+
+
 
 
 
