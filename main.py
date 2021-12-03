@@ -17,7 +17,7 @@ def main(x, y, step, insect_num, sample_num, insect_iteration, pop_num, train=Tr
 	optimize(pop_num)
 
 
-def ideal_update(SOI, population):
+def ideal_update(archive, population):
 	return [min([x.objectives[0] for x in population.pops]+[x.objectives[0] for x in archive.pops]), min([x.objectives[1] for x in population.pops]+[x.objectives[0] for x in archive.pops])]
 
 
