@@ -7,7 +7,8 @@ import nds
 import matplotlib.pyplot as plt
 import simulator
 from parameters import Parameters
-
+import time
+from multiprocessing import Process, Pool
 
 def main(x, y, step, insect_num, sample_num, insect_iteration, pop_num, train=True):
 	if train:
@@ -17,44 +18,42 @@ def main(x, y, step, insect_num, sample_num, insect_iteration, pop_num, train=Tr
 	optimize(pop_num)
 
 
-def ideal_update(archive, population):
-	return [min([x.objectives[0] for x in population.pops]+[x.objectives[0] for x in archive.pops]), min([x.objectives[1] for x in population.pops]+[x.objectives[0] for x in archive.pops])]
+def ideal_update(ideal,temp):
+	temp_ideal = [min([x.objectives[0] for x in temp.pops]),min([x.objectives[1] for x in temp.pops])]
+	return [min(ideal[0],temp_ideal[0]),min(temp_ideal[1],ideal[1])]
 
 
 def optimize(pop_num):
 
-	population = entity.populations(pop_num,Parameters.x+1,Parameters.y+1)
-
-
-
-
+	population = entity.populations(pop_num,Parameters.x//Parameters.step+1,Parameters.y//Parameters.step+1)
 	insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
 	population.insect_population = insect_pops
 	population.initial()
+	ideal = [1,1]
 
-	ideal = [min([x.objectives[0] for x in population.pops]),min([x.objectives[1] for x in population.pops])]
 	archive = entity.Archive(Parameters.archive_maximum)
 	archive.insect_population = insect_pops
-	for _ in range(10):
+	for iter in range(20):
+		print('the {} iteration'.format(iter))
+		print(time.strftime("%H:%M:%S")+': evaluate with new insect poopulation')
+		population.eva()
+		print(time.strftime("%H:%M:%S")+': generate new pops')
 		population.offspring_generate()
 		population.fast_dominated_sort()
 		population.crowding_distance()
 		population.pop_sort()
+
+		ideal = ideal_update(ideal, population)
 		SOI = population.SOI_identify(ideal)
+		print(time.strftime("%H:%M:%S")+': archive update')
+		ideal = archive.update(SOI,ideal)
 
-		archive.update(SOI,ideal)
-
-		ideal = ideal_update(SOI,population)
+		population.update()
 
 		insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
-
-
-
-
-
-		draw(population)
+		# draw(population)
 
 	exit()
 

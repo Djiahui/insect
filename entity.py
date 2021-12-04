@@ -443,7 +443,7 @@ class populations(object):
 		self.x_num = x_num
 		self.y_num = y_num
 
-		self.crossover_num = pop_num
+		self.crossover_num = pop_num//2
 		self.mutation_num = pop_num
 
 		self.insect_population = None
@@ -461,7 +461,10 @@ class populations(object):
 			temp_x[index] = 1
 
 			self.pops.append(Individual(temp_x))
-			self.evaluate(self.pops[-1])
+	def eva(self):
+		for pop in self.pops:
+			self.evaluate(pop)
+
 
 	def evaluate(self, pop):
 		"""
@@ -486,6 +489,9 @@ class populations(object):
 	def fast_dominated_sort(self):
 		self.fronts = [[]]
 		for individual in self.pops:
+			individual.domination_count = 0
+			individual.dominated_solutions = []
+			individual.rank = 0
 			for other_individual in self.pops:
 				if individual.dominates(other_individual):
 					individual.dominated_solutions.append(other_individual)
@@ -599,7 +605,8 @@ class populations(object):
 				y_1 = self.pops[j].objectives[0]-ideal[0]
 				y_2 = self.pops[j].objectives[1]-ideal[1]
 
-				axy[i,j] = ((x_1*y_1)+(x_2*y_2))/(np.sqrt(x_1**2+x_2**2)*np.sqrt(y_1**2+y_2**2))
+				axy[i,j] = np.arccos((x_1*y_1)+(x_2*y_2))/min(1e-6,(np.sqrt(x_1**2+x_2**2)*np.sqrt(y_1**2+y_2**2)))
+				axy[j,i] = axy[i,j]
 		return axy
 
 	def asf_calcul(self,ideal):
@@ -623,23 +630,33 @@ class Archive(object):
 		self.maximum = maximum
 
 	def evaluate(self, pop):
+		"""
+		:param pop: entity.Individual
+		:return:
+		"""
+		in_machine_nums, _,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
+		probaility = [0 if not x else 1/(2*(1+np.exp(-x))) for x in in_machine_nums]
 
-		in_machine_nums, _, _ = simulator.simulate(pop.x, Parameters.insect_iteration,
-												   copy.deepcopy(self.insect_population))
-		probaility = [0 if not x else 1 / (1 + np.exp(-x)) for x in in_machine_nums]
+		cost = [1+Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
 
-		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
+		for index, pro in enumerate(probaility):
+			if not pro:
+				cost[index] = 0
 
 		final_loss = sum(cost)
+		#norm
+		final_loss /= (1+Parameters.discount_q)*Parameters.insect_iteration
 
-		pop.objectives = pop.x.sum(), final_loss
+		pop.objectives = pop.x.sum()/((Parameters.x//Parameters.step+1)*(Parameters.y//Parameters.step+1)), final_loss
 
 	def update(self,SOIs,ideal):
 		for pop in self.pops:
 			self.evaluate(pop)
+			ideal[0] = min(ideal[0],pop.objectives[0])
+			ideal[1] = min(ideal[1],pop.objectives[1])
 
 		for pop in SOIs:
-			pop.m_diatance = abs(pop.objectives[0]-ideal[0])+abs(pop.objectives[1]-ideal[1])
+			pop.m_distance = abs(pop.objectives[0]-ideal[0])+abs(pop.objectives[1]-ideal[1])
 
 
 		archive_threshold = max([x.m_distance for x in SOIs])
@@ -647,8 +664,8 @@ class Archive(object):
 		new_pops = []
 
 		for pop in self.pops:
-			pop.m_diatance = abs(pop.objectives[0]-ideal[0])+abs(pop.objectives[1]-ideal[1])
-			if pop.m_diatance<archive_threshold*Parameters.alpha:
+			pop.m_distance = abs(pop.objectives[0]-ideal[0])+abs(pop.objectives[1]-ideal[1])
+			if pop.m_distance<archive_threshold*Parameters.alpha:
 				new_pops.append(pop)
 
 		if len(new_pops)+len(SOIs)>self.maximum:
@@ -658,6 +675,8 @@ class Archive(object):
 		new_pops = new_pops + SOIs
 
 		self.pops = new_pops
+
+		return ideal
 
 
 
