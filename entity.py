@@ -9,6 +9,7 @@ from data_from_sim.predict_net import pre_net
 from surrogate_model.surrogate_model import surrogate_net
 from parameters import Parameters
 import simulator
+from multiprocessing import Pool
 
 class insect(object):
 	def __init__(self, x, y, pos=None, direction=None, rate=None):
@@ -465,6 +466,51 @@ class populations(object):
 		for pop in self.pops:
 			self.evaluate(pop)
 
+	def eva_multiprocessing(self,start=None,end=None):
+		if not start and not end:
+			start = 0
+			end =  len(self.pops)
+		pool = Pool(10)
+
+
+		result = []
+
+		for i in range(start,end):
+			result.append(pool.apply_async(self.evaluate_modified,args=(self.pops[i].x,i,copy.deepcopy(self.insect_population))))
+		pool.close()
+		pool.join()
+
+		final_result = []
+		for r in result:
+			final_result.append(r.get())
+
+		for obj1,obj2,ii in final_result:
+			self.pops[ii].objectives = [obj1,obj2]
+
+
+
+
+
+	def evaluate_modified(self,*args):
+		x,i,insect_population = args
+		# print('the {0}th pop is under evaluating'.format(i))
+
+		in_machine_nums, _, _ = simulator.simulate(x, Parameters.insect_iteration,insect_population)
+		probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in in_machine_nums]
+		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
+
+		for index, pro in enumerate(probaility):
+			if not pro:
+				cost[index] = 0
+
+		final_loss = sum(cost)
+		# norm
+		final_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
+		num = x.sum()/((Parameters.x/Parameters.step+1)*(Parameters.y/Parameters.step+1))
+
+		return num,final_loss, i
+
+
 
 	def evaluate(self, pop):
 		"""
@@ -536,6 +582,28 @@ class populations(object):
 
 	def pop_sort(self):
 		self.pops = sorted(self.pops, key=lambda x: (x.rank, x.crowding_distance))
+
+	def offspring_generate_modified(self):
+		for _ in range(self.crossover_num):
+			index = np.random.rand(self.x_num, self.y_num) < np.random.rand(self.x_num, self.y_num)
+			parents1, parents2 = random.choices(self.pops, k=2)
+			temp1 = parents1.x.copy()
+			temp2 = parents2.x.copy()
+			temp1[index] = parents2.x[index]
+			temp2[index] = parents1.x[index]
+			self.pops.append(Individual(temp1))
+			self.pops.append(Individual(temp2))
+
+		count = 0
+		for pop in self.pops:
+			index = np.random.rand(self.x_num, self.y_num) < np.full((self.x_num, self.y_num), 0.1)
+			temp = pop.x.copy()
+			temp[index] = 1 - temp[index]
+			self.pops.append(Individual(temp))
+			count += 1
+			if count  == self.mutation_num:
+				break
+		self.eva_multiprocessing(self.pop_num,len(self.pops))
 
 	def offspring_generate(self):
 		"""
@@ -629,6 +697,43 @@ class Archive(object):
 		self.pops = []
 		self.maximum = maximum
 
+	def eva_modified(self):
+		if not self.pops:
+			return
+		pool = Pool(10)
+
+		result = []
+		for i in range(len(self.pops)):
+			result.append(pool.apply_async(self.evaluate_modified,args=(self.pops[i].x,i,copy.deepcopy(self.insect_population))))
+		pool.close()
+		pool.join()
+
+		final_result = []
+		for r in result:
+			final_result.append(r.get())
+
+		for obj1, obj2, ii in final_result:
+			self.pops[ii].objectives = [obj1, obj2]
+
+	def evaluate_modified(self, *args):
+		x, i, insect_population = args
+		# print('the {0}th pop in archive is under evaluating'.format(i))
+
+		in_machine_nums, _, _ = simulator.simulate(x, Parameters.insect_iteration, insect_population)
+		probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in in_machine_nums]
+		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
+
+		for index, pro in enumerate(probaility):
+			if not pro:
+				cost[index] = 0
+
+		final_loss = sum(cost)
+		# norm
+		final_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
+		num = x.sum() / ((Parameters.x / Parameters.step + 1) * (Parameters.y / Parameters.step + 1))
+
+		return num, final_loss, i
+
 	def evaluate(self, pop):
 		"""
 		:param pop: entity.Individual
@@ -650,10 +755,10 @@ class Archive(object):
 		pop.objectives = pop.x.sum()/((Parameters.x//Parameters.step+1)*(Parameters.y//Parameters.step+1)), final_loss
 
 	def update(self,SOIs,ideal):
-		for pop in self.pops:
-			self.evaluate(pop)
-			ideal[0] = min(ideal[0],pop.objectives[0])
-			ideal[1] = min(ideal[1],pop.objectives[1])
+		self.eva_modified()
+		if self.pops:
+			ideal[0]  = min(min([x.objectives[0] for x in self.pops]),ideal[0])
+			ideal[1] = min(min([x.objectives[0] for x in self.pops]), ideal[1])
 
 		for pop in SOIs:
 			pop.m_distance = abs(pop.objectives[0]-ideal[0])+abs(pop.objectives[1]-ideal[1])

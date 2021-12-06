@@ -37,13 +37,12 @@ def optimize(pop_num):
 	for iter in range(Parameters.iteration):
 		print('the {} iteration'.format(iter))
 		print(time.strftime("%H:%M:%S")+': evaluate with new insect poopulation')
-		population.eva()
+		population.eva_multiprocessing()
 		print(time.strftime("%H:%M:%S")+': generate new pops')
-		population.offspring_generate()
+		population.offspring_generate_modified()
 		population.fast_dominated_sort()
 		population.crowding_distance()
 		population.pop_sort()
-
 		ideal = ideal_update(ideal, population)
 		SOI = population.SOI_identify(ideal)
 		print(time.strftime("%H:%M:%S")+': archive update')
@@ -55,7 +54,8 @@ def optimize(pop_num):
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
 
-		draw(archive)
+		if not iter%10:
+			draw(archive)
 
 		print('save the result')
 
@@ -65,7 +65,7 @@ def optimize(pop_num):
 		with open('final_objectives','wb') as pkl:
 			pickle.dump(final_objectives,pkl)
 
-	exit()
+
 
 
 def draw(population):
