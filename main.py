@@ -1,4 +1,5 @@
 import copy
+import os
 import pickle
 
 import entity
@@ -33,7 +34,7 @@ def optimize(pop_num):
 
 	archive = entity.Archive(Parameters.archive_maximum)
 	archive.insect_population = insect_pops
-	for iter in range(20):
+	for iter in range(Parameters.iteration):
 		print('the {} iteration'.format(iter))
 		print(time.strftime("%H:%M:%S")+': evaluate with new insect poopulation')
 		population.eva()
@@ -53,7 +54,16 @@ def optimize(pop_num):
 		insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
-		# draw(population)
+
+		draw(archive)
+
+		print('save the result')
+
+		final_objectives = [x.objectives for x in archive.pops]
+		if os.path.exists('final_objectives'):
+			os.remove('final_objectives')
+		with open('final_objectives','wb') as pkl:
+			pickle.dump(final_objectives,pkl)
 
 	exit()
 

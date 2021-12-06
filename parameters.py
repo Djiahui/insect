@@ -5,11 +5,14 @@ class Parameters(object):
 	prob_q = 0.5
 
 	insect_num = 13
+	insect_iteration = 90
+
 	x = 200
 	y = 200
 	step = 10
 	sample_num = 180
-	insect_iteration = 90
+
+	iteration = 50
 	pop_num = 50
 	test = True
 	insect_fall_machine = 1
