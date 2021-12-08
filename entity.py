@@ -716,7 +716,10 @@ class Archive(object):
 			self.pops[ii].objectives = [obj1, obj2]
 
 	def evaluate_modified(self, *args):
+
 		x, i, insect_population = args
+
+		# the ith pops the jth insects
 		# print('the {0}th pop in archive is under evaluating'.format(i))
 
 		in_machine_nums, _, _ = simulator.simulate(x, Parameters.insect_iteration, insect_population)
@@ -782,6 +785,68 @@ class Archive(object):
 		self.pops = new_pops
 
 		return ideal
+
+	def fast_dominated_sort(self):
+		self.fronts = [[]]
+		for individual in self.pops:
+			individual.domination_count = 0
+			individual.dominated_solutions = []
+			individual.rank = 0
+			for other_individual in self.pops:
+				if individual.dominates(other_individual):
+					individual.dominated_solutions.append(other_individual)
+				elif other_individual.dominates(individual):
+					individual.domination_count += 1
+			if individual.domination_count == 0:
+				individual.rank = 0
+				self.fronts[0].append(individual)
+		# in next part the number of domination_count is changed to 0.
+		i = 0
+		while len(self.fronts[i]) > 0:
+			temp = []
+			for individual in self.fronts[i]:
+				for other_individual in individual.dominated_solutions:
+					other_individual.domination_count -= 1
+					if other_individual.domination_count == 0:
+						other_individual.rank = i + 1
+						temp.append(other_individual)
+			i = i + 1
+			self.fronts.append(temp)
+
+	def final_process(self):
+
+		insect_pops = []
+		for i in range(Parameters.min_insect_num,Parameters.max_insect_num+1):
+			insect_pops.append(insect_population(i,screen(Parameters.x,Parameters.y,Parameters.step)))
+
+
+		pool = Pool(12)
+		result = []
+		for j in range(len(insect_pops)):
+			for i in range(len(self.pops)):
+				result.append(pool.apply_async(self.evaluate_modified,args=(self.pops[i].x,i,copy.deepcopy(insect_pops[j]))))
+		pool.close()
+		pool.join()
+
+		finalresult = []
+		for r in result:
+			finalresult.append(r.get())
+
+		objectives = [[0,0] for _ in range(len(self.pops))]
+
+		for f in finalresult:
+			objectives[f[2]][0] += f[0]
+			objectives[f[2]][1] += f[1]
+		scenario_num = Parameters.max_insect_num-Parameters.min_insect_num+1
+		for i in range(len(self.pops)):
+			self.pops[i].objectives[0] = objectives[i][0]/scenario_num
+			self.pops[i].objectives[1] = objectives[i][1] / scenario_num
+
+		self.fast_dominated_sort()
+
+
+
+
 
 
 

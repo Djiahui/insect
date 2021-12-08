@@ -21,6 +21,9 @@ class Parameters(object):
 	eliminated_number = 3*pop_num-40
 	archive_maximum = 50
 	alpha = 0.8
+
+	max_insect_num = 100
+	min_insect_num = 13
 	@classmethod
 	def get_random_insect_number(self):
 		return random.randint(13,100)
