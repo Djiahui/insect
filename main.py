@@ -57,14 +57,16 @@ def optimize(pop_num):
 
 		# if not iter%10:
 		# 	draw(archive.pops)
+	exit()
 
-		print('save the result')
+
 
 
 
 	archive.final_process()
 	draw(archive.fronts[0])
 
+	print('save the result')
 	final_objectives = [x.objectives for x in archive.fronts[0]]
 	final_decision = [x.x for x in archive.fronts[0]]
 	if os.path.exists('final_objectives'):
@@ -94,7 +96,5 @@ def draw_2():
 	plt.show()
 
 if __name__ == '__main__':
-	draw_2()
-	exit()
 	# main(Parameters.x, Parameters.y, Parameters.step, Parameters.insect_num, Parameters.sample_num, Parameters.insect_iteration, Parameters.pop_num)
 	optimize(Parameters.pop_num)
