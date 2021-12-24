@@ -422,7 +422,7 @@ class Individual(object):
 		for i in range(x_num):
 			for j in range(y_num):
 				if self.x[i, j] == 1:
-					self.traps.append(trap(np.array([x_num * step, y_num * step])))
+					self.traps.append(trap(np.array([i * step, j * step])))
 
 	def dominates(self, other_individual):
 		if self.__eq__(other_individual):
@@ -460,6 +460,7 @@ class populations(object):
 			index = temp_x > temp_y
 			temp_x[:].fill(0)
 			temp_x[index] = 1
+			temp_x[:6,:12] = 0
 
 			self.pops.append(Individual(temp_x))
 	def eva(self):
@@ -590,6 +591,8 @@ class populations(object):
 			temp1 = parents1.x.copy()
 			temp2 = parents2.x.copy()
 			temp1[index] = parents2.x[index]
+			temp1[:6,:12] = 0
+			temp2[:6,:12] = 0
 			temp2[index] = parents1.x[index]
 			self.pops.append(Individual(temp1))
 			self.pops.append(Individual(temp2))
@@ -599,6 +602,7 @@ class populations(object):
 			index = np.random.rand(self.x_num, self.y_num) < np.full((self.x_num, self.y_num), 0.1)
 			temp = pop.x.copy()
 			temp[index] = 1 - temp[index]
+			temp[:6,:12] = 0
 			self.pops.append(Individual(temp))
 			count += 1
 			if count  == self.mutation_num:
@@ -617,6 +621,9 @@ class populations(object):
 			temp2 = parents2.x.copy()
 			temp1[index] = parents2.x[index]
 			temp2[index] = parents1.x[index]
+			temp1[:6, :12] = 0
+			temp2[:6, :12] = 0
+
 			self.pops.append(Individual(temp1))
 			self.evaluate(self.pops[-1])
 			self.pops.append(Individual(temp2))
@@ -627,6 +634,7 @@ class populations(object):
 			index = np.random.rand(self.x_num, self.y_num) < np.full((self.x_num, self.y_num), 0.1)
 			temp = pop.x.copy()
 			temp[index] = 1 - temp[index]
+			temp[:6, :12] = 0
 			self.pops.append(Individual(temp))
 			self.evaluate(self.pops[-1])
 			count += 1

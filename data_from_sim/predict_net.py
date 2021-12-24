@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset,DataLoader
 import pickle
-
+import matplotlib.pyplot as plt
+import os
 torch.manual_seed(1234)
-
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 class pre_net(nn.Module):
 	def __init__(self):
 		super(pre_net, self).__init__()
@@ -57,22 +58,17 @@ def train(net,train_loader,loss_fun,optim):
 		loss.backward()
 		optim.step()
 
-		total_loss.append(loss.item())
-	return torch.tensor(total_loss).mean().item()
-def eval(net,test_loader,loss_fun):
-	total_loss = []
-	for _, data in enumerate(test_loader):
-		s_test = data['start']
-		temp_test = data['temp']
-		target_test = data['target'].view(-1, 1)
+def eval(net,test_dataloader,loss_fun):
+	for test_data in test_dataloader:
+		s_test = test_data['start']
+		temp_test = test_data['temp']
+		target_test = test_data['target'].view(-1, 1)
 
 		sample_test = torch.cat((s_test.view(-1, 1), temp_test.view(-1,1)), 1)
-		predict_number_test = net(sample_test)
-		loss_test = loss_fun(predict_number_test, target_test).item()
+		predict_number_test = torch.clamp(net(sample_test),1,1e6)
+		loss_test = torch.sqrt(loss_fun(torch.log(predict_number_test), torch.log(target_test))).item()
 
-		total_loss.append(loss_test)
-
-	return torch.tensor(total_loss).mean().item()
+	return loss_test
 
 
 def main():
@@ -90,11 +86,19 @@ def main():
 	loss_fun = torch.nn.MSELoss()
 
 	optim = torch.optim.Adam(net.parameters(),0.0001)
+	test_ls = []
 
-	for ep in range(1000):
-		train_loss = train(net,dataloader_train,loss_fun,optim)
+	for ep in range(100):
+		train(net,dataloader_train,loss_fun,optim)
 		test_loss = eval(net,dataloader_test,loss_fun)
-		print(test_loss/test_num)
+		print(test_loss)
+		test_ls.append(test_loss)
+
+	plt.plot(range(len(test_ls)),test_ls)
+	plt.show()
+
+	exit(0)
+
 	torch.save(net.state_dict(),'regression_model_parameters_non_linear.pkl')
 
 if __name__ == "__main__":

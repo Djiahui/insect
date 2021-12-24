@@ -55,16 +55,19 @@ def optimize(pop_num):
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
 
+		draw_traps(archive,iter)
+
 		# if not iter%10:
 		# 	draw(archive.pops)
-	exit()
+
 
 
 
 
 
 	archive.final_process()
-	draw(archive.fronts[0])
+	draw_pareto_front(archive.fronts[0])
+	exit()
 
 	print('save the result')
 	final_objectives = [x.objectives for x in archive.fronts[0]]
@@ -79,12 +82,40 @@ def optimize(pop_num):
 
 
 
-def draw(pops):
+def draw_pareto_front(pops,i=-1):
 	temp = [x.objectives for x in pops]
 	temp = np.array(temp)
 
 	plt.scatter(temp[:, 0], temp[:, 1])
+	if i==-1:
+		plt.title('Pareto Optimal Solutions')
+		plt.savefig('svg/{}th iteration pareto.svg'.format(i))
+	else:
+		plt.title('{}th iteration archive'.format(i))
+		plt.savefig('svg/{}th iteration archive.svg'.format(i))
 	plt.show()
+
+def draw_traps(archive,iteration):
+
+	archive.fast_dominated_sort()
+	draw_pareto_front(archive.fronts[0],iteration)
+	n = len(archive.fronts[0])
+	for i in range(n):
+		archive.fronts[0][i].traps_generate(Parameters.x//Parameters.step+1,Parameters.y//Parameters.step+1,Parameters.step)
+
+		trap_pos = list(map(lambda x: [x.pos[1], 200 - x.pos[0]], archive.fronts[0][i].traps))
+		trap_pos = np.vstack(trap_pos)
+		plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5)
+	# plt.scatter(trap_pos[:,0],trap_pos[:,1],s=2000,c='r',alpha=0.5)
+		plt.grid()
+		plt.xticks(np.arange(0, 210, 10))
+		plt.yticks(np.arange(0, 210, 10))
+		plt.title('{}th iteration'.format(iteration))
+		plt.savefig('svg/{}th iteration {}th figure.svg'.format(iteration,i))
+		plt.show()
+
+
+
 
 def draw_2():
 	with open('final_objectives','rb') as pkl:

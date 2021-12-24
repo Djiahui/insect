@@ -65,6 +65,7 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 
 		if draw_or_not:
 			draw(pops, traps,day_count)
+			exit()
 
 		day_count += 1
 		if day_count == iteration:
