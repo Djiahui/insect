@@ -77,6 +77,7 @@ def main():
 	n = len(dataset)
 	train_num = int(n * 0.85)
 	test_num = n - train_num
+	print(train_num,test_num)
 	train_data, test_data = torch.utils.data.random_split(dataset, [train_num, test_num])
 
 	dataloader_train = DataLoader(train_data,256,shuffle=True)
@@ -85,7 +86,7 @@ def main():
 	net = pre_net()
 	loss_fun = torch.nn.MSELoss()
 
-	optim = torch.optim.Adam(net.parameters(),0.0001)
+	optim = torch.optim.Adam(net.parameters(),0.001)
 	test_ls = []
 
 	for ep in range(100):
@@ -95,6 +96,9 @@ def main():
 		test_ls.append(test_loss)
 
 	plt.plot(range(len(test_ls)),test_ls)
+	plt.xlabel('epochs')
+	plt.ylabel('error')
+	# plt.savefig('../png/error.png')
 	plt.show()
 
 	exit(0)

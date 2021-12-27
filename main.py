@@ -59,15 +59,9 @@ def optimize(pop_num):
 
 		# if not iter%10:
 		# 	draw(archive.pops)
-
-
-
-
-
-
+	print(time.strftime("%H:%M:%S")+': final process')
 	archive.final_process()
 	draw_pareto_front(archive.fronts[0])
-	exit()
 
 	print('save the result')
 	final_objectives = [x.objectives for x in archive.fronts[0]]
@@ -89,10 +83,10 @@ def draw_pareto_front(pops,i=-1):
 	plt.scatter(temp[:, 0], temp[:, 1])
 	if i==-1:
 		plt.title('Pareto Optimal Solutions')
-		plt.savefig('svg/{}th iteration pareto.svg'.format(i))
+		plt.savefig('png/Pareto Optimal Solutions.png')
 	else:
 		plt.title('{}th iteration archive'.format(i))
-		plt.savefig('svg/{}th iteration archive.svg'.format(i))
+		plt.savefig('png/{}th iteration archive.png'.format(i))
 	plt.show()
 
 def draw_traps(archive,iteration):
@@ -111,7 +105,7 @@ def draw_traps(archive,iteration):
 		plt.xticks(np.arange(0, 210, 10))
 		plt.yticks(np.arange(0, 210, 10))
 		plt.title('{}th iteration'.format(iteration))
-		plt.savefig('svg/{}th iteration {}th figure.svg'.format(iteration,i))
+		plt.savefig('png/{}th iteration {}th figure.png'.format(iteration,i))
 		plt.show()
 
 
