@@ -59,6 +59,7 @@ def train(net,train_loader,loss_fun,optim):
 		optim.step()
 
 def eval(net,test_dataloader,loss_fun):
+	loss_test = 0
 	for test_data in test_dataloader:
 		s_test = test_data['start']
 		temp_test = test_data['temp']
@@ -86,7 +87,7 @@ def main():
 	net = pre_net()
 	loss_fun = torch.nn.MSELoss()
 
-	optim = torch.optim.Adam(net.parameters(),0.001)
+	optim = torch.optim.Adam(net.parameters(),0.0001)
 	test_ls = []
 
 	for ep in range(100):

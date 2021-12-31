@@ -12,7 +12,7 @@ class Parameters(object):
 	step = 10
 	sample_num = 180
 
-	iteration = 50
+	iteration = 10
 	pop_num = 50
 	test = True
 	insect_fall_machine = 1

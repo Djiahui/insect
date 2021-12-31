@@ -55,7 +55,7 @@ def optimize(pop_num):
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
 
-		draw_traps(archive,iter)
+		# draw_traps(archive,iter)
 
 		# if not iter%10:
 		# 	draw(archive.pops)

@@ -720,7 +720,7 @@ class Archive(object):
 		for r in result:
 			final_result.append(r.get())
 
-		for obj1, obj2, ii in final_result:
+		for obj1, obj2, ii,_ in final_result:
 			self.pops[ii].objectives = [obj1, obj2]
 
 	def evaluate_modified(self, *args):
@@ -730,7 +730,7 @@ class Archive(object):
 		# the ith pops the jth insects
 		# print('the {0}th pop in archive is under evaluating'.format(i))
 
-		in_machine_nums, _, _ = simulator.simulate(x, Parameters.insect_iteration, insect_population)
+		in_machine_nums, _, insects_num = simulator.simulate(x, Parameters.insect_iteration, insect_population)
 		probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in in_machine_nums]
 		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
 
@@ -743,7 +743,7 @@ class Archive(object):
 		final_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
 		num = x.sum() / ((Parameters.x / Parameters.step + 1) * (Parameters.y / Parameters.step + 1))
 
-		return num, final_loss, i
+		return num, final_loss, i,insects_num
 
 	def evaluate(self, pop):
 		"""
@@ -841,14 +841,17 @@ class Archive(object):
 			finalresult.append(r.get())
 
 		objectives = [[0,0] for _ in range(len(self.pops))]
+		insect_num = [[] for _ in range(len(self.pops))]
 
 		for f in finalresult:
 			objectives[f[2]][0] += f[0]
 			objectives[f[2]][1] += f[1]
+			insect_num[f[2]].append(f[3])
 		scenario_num = Parameters.max_insect_num-Parameters.min_insect_num+1
 		for i in range(len(self.pops)):
 			self.pops[i].objectives[0] = objectives[i][0]/scenario_num
 			self.pops[i].objectives[1] = objectives[i][1] / scenario_num
+			self.pops[i].insect_num = insect_num[i]
 
 		self.fast_dominated_sort()
 
