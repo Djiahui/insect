@@ -457,6 +457,11 @@ class populations(object):
 		for _ in range(self.pop_num):
 			temp_x = np.random.rand(self.x_num, self.y_num)
 			temp_y = np.random.rand(self.x_num, self.y_num)
+			temp = np.random.rand()
+			# if temp<0.1:
+			# 	temp_y[:].fill(0.9)
+			# if 0.1<temp<0.3:
+			# 	temp_y[:].fill(0.5)
 			index = temp_x > temp_y
 			temp_x[:].fill(0)
 			temp_x[index] = 1

@@ -39,23 +39,25 @@ def optimize(pop_num):
 		print('the {} iteration'.format(iter))
 		print(time.strftime("%H:%M:%S")+': evaluate with new insect poopulation')
 		population.eva_multiprocessing()
-		print(time.strftime("%H:%M:%S")+': generate new pops')
-		population.offspring_generate_modified()
-		population.fast_dominated_sort()
-		population.crowding_distance()
-		population.pop_sort()
-		ideal = ideal_update(ideal, population)
+
+		for _ in range(20):
+			print('{}iter {}times '.format(iter, _)+time.strftime("%H:%M:%S") + ': generate new pops')
+			population.offspring_generate_modified()
+			population.fast_dominated_sort()
+			population.crowding_distance()
+			population.pop_sort()
+			ideal = ideal_update(ideal, population)
+			population.update()
+		print('identify')
 		SOI = population.SOI_identify(ideal)
 		print(time.strftime("%H:%M:%S")+': archive update')
 		ideal = archive.update(SOI,ideal)
-
-		population.update()
 
 		insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
 
-		# draw_traps(archive,iter)
+		draw_traps(population,iter)
 
 		# if not iter%10:
 		# 	draw(archive.pops)
@@ -66,11 +68,11 @@ def optimize(pop_num):
 	print('save the result')
 	final_objectives = [x.objectives for x in archive.fronts[0]]
 	final_decision = [x.x for x in archive.fronts[0]]
-	if os.path.exists('final_objectives'):
+	if os.path.exists('new_final_objectives'):
 		os.remove('final_objectives')
 	with open('final_objectives', 'wb') as pkl:
 		pickle.dump(final_objectives, pkl)
-	with open('final_decsion','wb') as pkl2:
+	with open('new_final_decision','wb') as pkl2:
 		pickle.dump(final_decision,pkl2)
 
 
@@ -91,8 +93,9 @@ def draw_pareto_front(pops,i=-1):
 
 def draw_traps(archive,iteration):
 
-	archive.fast_dominated_sort()
+	# archive.fast_dominated_sort()
 	draw_pareto_front(archive.fronts[0],iteration)
+	archive.fronts[0].sort(key = lambda x: x.x.sum())
 	n = len(archive.fronts[0])
 	for i in range(n):
 		archive.fronts[0][i].traps_generate(Parameters.x//Parameters.step+1,Parameters.y//Parameters.step+1,Parameters.step)
