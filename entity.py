@@ -39,6 +39,9 @@ class insect(object):
 
 		self.eat_num = 0.05
 
+		self.involved = False
+		self.in_trap = False
+
 	def update(self, global_best, env, traps):
 
 		self.age += 1
@@ -86,6 +89,7 @@ class insect(object):
 		# 	self.pos[1] = 2 * env.y - self.pos[1]
 		self.living_test(traps)
 		if not self.status:
+			self.in_trap = True
 			return
 
 		cur_pos = [int(self.pos[0] // env.step), int(self.pos[1] // env.step)]
@@ -94,6 +98,7 @@ class insect(object):
 
 		self.in_machine(repair_pos, env)
 		if not self.status:
+			self.involved = True
 			return
 
 		self.fitness = env.eva(self.pos, self.eat_num)
@@ -204,9 +209,16 @@ class insect_population(object):
 		for temp in self.populations:
 			temp.update(self.global_best, self.env, traps)
 
+		insect_position_involved = [x.pos for x in self.populations if x.involved]
+		insect_position_traps = [x.pos for x in self.populations if x.in_trap]
+
 		self.populations = list(filter(lambda x: x.status, self.populations))
+
+		insect_position_alive = [x.pos for x in self.populations]
 		if self.populations:
 			self.global_best = copy.deepcopy(sorted(self.populations, key=lambda x: x.fitness, reverse=True)[0])
+
+		return insect_position_alive,insect_position_involved,insect_position_traps
 
 
 class screen(object):

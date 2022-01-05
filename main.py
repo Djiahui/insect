@@ -24,6 +24,23 @@ def ideal_update(ideal,temp):
 	temp_ideal = [min([x.objectives[0] for x in temp.pops]),min([x.objectives[1] for x in temp.pops])]
 	return [min(ideal[0],temp_ideal[0]),min(temp_ideal[1],ideal[1])]
 
+def picture():
+	# 数量相同 分布不同   时间的影响  数量分布相同，决策不同  决策相同，数量分布都不同
+	population = entity.populations(2, Parameters.x // Parameters.step + 1, Parameters.y // Parameters.step + 1)
+	insect_pops = entity.insect_population(80, entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	population.insect_population = insect_pops
+	population.initial()
+	population.eva()
+
+	insect_pops2 = entity.insect_population(80,
+										   entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	population.insect_population = insect_pops2
+	population.eva()
+
+	insect_pops3 = entity.insect_population(Parameters.get_random_insect_number(), entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	population.insect_population = insect_pops3
+	population.eva()
+	exit(0)
 
 def optimize(pop_num):
 
@@ -124,5 +141,7 @@ def draw_2():
 	plt.show()
 
 if __name__ == '__main__':
+	picture()
+	exit()
 	# main(Parameters.x, Parameters.y, Parameters.step, Parameters.insect_num, Parameters.sample_num, Parameters.insect_iteration, Parameters.pop_num)
 	optimize(Parameters.pop_num)

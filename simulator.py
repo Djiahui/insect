@@ -29,6 +29,23 @@ def draw(pops, traps,day_count):
 	plt.xticks(np.arange(0, 200, 10))
 	plt.yticks(np.arange(0, 200, 10))
 	plt.show()
+def draw_new(alive,involved,intrap,traps):
+	alivepos = np.vstack([[x[1],200-x[0]] for x in alive])
+	involvedpos = np.vstack([[x[1], 200 - x[0]] for x in involved])
+	intrappos = np.vstack([[x[1], 200 - x[0]] for x in intrap])
+	trap_pos = np.vstack(list(map(lambda x: [x.pos[1], 200 - x.pos[0]], traps)))
+
+	plt.scatter(alivepos[:,0],alivepos[:,1],c = 'g')
+	plt.scatter(involvedpos[:, 0], involvedpos[:, 1], c='b')
+	plt.scatter(intrappos[:, 0], intrappos[:, 1], c='purple')
+	plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5)
+
+	plt.grid()
+	plt.xticks(np.arange(0, 200, 10))
+	plt.yticks(np.arange(0, 200, 10))
+	plt.show()
+
+
 
 
 def trap_generate(matrix, x, y, step):
@@ -58,7 +75,10 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 
 	for _, temp in temp_data.items():
 
-		pops.update(traps, temp)
+		insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps, temp)
+
+		# draw_new(insect_position_alive,insect_position_involved,insect_position_traps,traps)
+
 		in_machine_nums[day_count] = pops.env.in_machine_num
 		insect_nums[day_count] = len(pops.populations)
 		pops.env.update()

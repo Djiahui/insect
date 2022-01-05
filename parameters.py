@@ -5,7 +5,7 @@ class Parameters(object):
 	prob_q = 0.5
 
 	insect_num = 13
-	insect_iteration = 90
+	insect_iteration = 2
 
 	x = 200
 	y = 200
