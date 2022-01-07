@@ -204,7 +204,7 @@ class insect_population(object):
 		self.generate(traps, to_generate_num)
 
 		if not self.populations:
-			return
+			return None,None,None
 
 		for temp in self.populations:
 			temp.update(self.global_best, self.env, traps)
@@ -871,6 +871,15 @@ class Archive(object):
 			self.pops[i].insect_num = insect_num[i]
 
 		self.fast_dominated_sort()
+
+		self.fronts[0].sort(key = lambda x:x.objectives[0])
+		count = 0
+		for pop in self.fronts[0]:
+			for temp in pop.insect_num:
+				plt.plot(range(len(temp)),temp)
+			plt.savefig('png/'+str(count)+'.png')
+			plt.show()
+			count += 1
 
 
 

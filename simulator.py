@@ -41,8 +41,8 @@ def draw_new(alive,involved,intrap,traps):
 	plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5)
 
 	plt.grid()
-	plt.xticks(np.arange(0, 200, 10))
-	plt.yticks(np.arange(0, 200, 10))
+	plt.xticks(np.arange(0, 210, 10))
+	plt.yticks(np.arange(0, 210, 10))
 	plt.show()
 
 
@@ -74,10 +74,11 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 	insect_nums = [0 for _ in range(iteration)]
 
 	for _, temp in temp_data.items():
+		# pops.update(traps, temp)
 
 		insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps, temp)
 
-		# draw_new(insect_position_alive,insect_position_involved,insect_position_traps,traps)
+		draw_new(insect_position_alive,insect_position_involved,insect_position_traps,traps)
 
 		in_machine_nums[day_count] = pops.env.in_machine_num
 		insect_nums[day_count] = len(pops.populations)

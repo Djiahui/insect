@@ -1,6 +1,7 @@
 import copy
 import os
 import pickle
+import random
 
 import entity
 import numpy as np
@@ -26,10 +27,14 @@ def ideal_update(ideal,temp):
 
 def picture():
 	# 数量相同 分布不同   时间的影响  数量分布相同，决策不同  决策相同，数量分布都不同
+	with open('new_final_decision','rb') as pkl:
+		temp = pickle.load(pkl)
 	population = entity.populations(2, Parameters.x // Parameters.step + 1, Parameters.y // Parameters.step + 1)
 	insect_pops = entity.insect_population(80, entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops
-	population.initial()
+	pop1,pop2 = random.choices(temp,k=2)
+	population.pops.append(entity.Individual(pop1))
+	population.pops.append(entity.Individual(pop2))
 	population.eva()
 
 	insect_pops2 = entity.insect_population(80,
@@ -57,18 +62,21 @@ def optimize(pop_num):
 		print(time.strftime("%H:%M:%S")+': evaluate with new insect poopulation')
 		population.eva_multiprocessing()
 
-		for _ in range(20):
-			print('{}iter {}times '.format(iter, _)+time.strftime("%H:%M:%S") + ': generate new pops')
-			population.offspring_generate_modified()
-			population.fast_dominated_sort()
-			population.crowding_distance()
-			population.pop_sort()
-			ideal = ideal_update(ideal, population)
-			population.update()
+
+
+		population.offspring_generate_modified()
+		population.fast_dominated_sort()
+		population.crowding_distance()
+		population.pop_sort()
+		ideal = ideal_update(ideal, population)
+
+
 		print('identify')
 		SOI = population.SOI_identify(ideal)
 		print(time.strftime("%H:%M:%S")+': archive update')
 		ideal = archive.update(SOI,ideal)
+
+		population.update()
 
 		insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
 		population.insect_population = insect_pops
@@ -80,14 +88,12 @@ def optimize(pop_num):
 		# 	draw(archive.pops)
 	print(time.strftime("%H:%M:%S")+': final process')
 	archive.final_process()
-	draw_pareto_front(archive.fronts[0])
+	draw_traps(archive)
 
 	print('save the result')
 	final_objectives = [x.objectives for x in archive.fronts[0]]
 	final_decision = [x.x for x in archive.fronts[0]]
-	if os.path.exists('new_final_objectives'):
-		os.remove('final_objectives')
-	with open('final_objectives', 'wb') as pkl:
+	with open('new_final_objectives', 'wb') as pkl:
 		pickle.dump(final_objectives, pkl)
 	with open('new_final_decision','wb') as pkl2:
 		pickle.dump(final_decision,pkl2)
@@ -108,7 +114,7 @@ def draw_pareto_front(pops,i=-1):
 		plt.savefig('png/{}th iteration archive.png'.format(i))
 	plt.show()
 
-def draw_traps(archive,iteration):
+def draw_traps(archive,iteration=-1):
 
 	# archive.fast_dominated_sort()
 	draw_pareto_front(archive.fronts[0],iteration)
@@ -124,8 +130,11 @@ def draw_traps(archive,iteration):
 		plt.grid()
 		plt.xticks(np.arange(0, 210, 10))
 		plt.yticks(np.arange(0, 210, 10))
-		plt.title('{}th iteration'.format(iteration))
-		plt.savefig('png/{}th iteration {}th figure.png'.format(iteration,i))
+		if iteration == -1:
+			plt.savefig('png/{} final figure.png'.format(i))
+		else:
+			plt.title('{}th iteration'.format(iteration))
+			plt.savefig('png/{}th iteration {}th figure.png'.format(iteration,i))
 		plt.show()
 
 
@@ -142,6 +151,6 @@ def draw_2():
 
 if __name__ == '__main__':
 	picture()
-	exit()
+	exit(0)
 	# main(Parameters.x, Parameters.y, Parameters.step, Parameters.insect_num, Parameters.sample_num, Parameters.insect_iteration, Parameters.pop_num)
 	optimize(Parameters.pop_num)

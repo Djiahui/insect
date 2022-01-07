@@ -18,7 +18,7 @@ class Parameters(object):
 	insect_fall_machine = 1
 
 
-	eliminated_number = 40
+	eliminated_number = 3*pop_num-40
 	archive_maximum = 50
 	alpha = 0.8
 
