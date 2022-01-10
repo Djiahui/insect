@@ -27,22 +27,22 @@ def ideal_update(ideal,temp):
 
 def picture():
 	# 数量相同 分布不同   时间的影响  数量分布相同，决策不同  决策相同，数量分布都不同
-	with open('new_final_decision','rb') as pkl:
+	with open('new_final_decision_insect13_2','rb') as pkl:
 		temp = pickle.load(pkl)
 	population = entity.populations(2, Parameters.x // Parameters.step + 1, Parameters.y // Parameters.step + 1)
-	insect_pops = entity.insect_population(80, entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	insect_pops = entity.insect_population(13, entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops
 	pop1,pop2 = random.choices(temp,k=2)
 	population.pops.append(entity.Individual(pop1))
 	population.pops.append(entity.Individual(pop2))
 	population.eva()
 
-	insect_pops2 = entity.insect_population(80,
+	insect_pops2 = entity.insect_population(13,
 										   entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops2
 	population.eva()
 
-	insect_pops3 = entity.insect_population(Parameters.get_random_insect_number(), entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	insect_pops3 = entity.insect_population(13, entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops3
 	population.eva()
 	exit(0)
@@ -50,7 +50,7 @@ def picture():
 def optimize(pop_num):
 
 	population = entity.populations(pop_num,Parameters.x//Parameters.step+1,Parameters.y//Parameters.step+1)
-	insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
+	insect_pops = entity.insect_population(13,entity.screen(Parameters.x,Parameters.y,Parameters.step))
 	population.insect_population = insect_pops
 	population.initial()
 	ideal = [1,1]
@@ -78,7 +78,7 @@ def optimize(pop_num):
 
 		population.update()
 
-		insect_pops = entity.insect_population(Parameters.get_random_insect_number(),entity.screen(Parameters.x,Parameters.y,Parameters.step))
+		insect_pops = entity.insect_population(13,entity.screen(Parameters.x,Parameters.y,Parameters.step))
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
 

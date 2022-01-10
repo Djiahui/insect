@@ -842,7 +842,7 @@ class Archive(object):
 
 		insect_pops = []
 		for i in range(Parameters.min_insect_num,Parameters.max_insect_num+1):
-			insect_pops.append(insect_population(i,screen(Parameters.x,Parameters.y,Parameters.step)))
+			insect_pops.append(insect_population(13,screen(Parameters.x,Parameters.y,Parameters.step)))
 
 
 		pool = Pool(12)
