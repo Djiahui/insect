@@ -5,20 +5,21 @@ class Parameters(object):
 	prob_q = 0.5
 
 	insect_num = 13
-	insect_iteration = 2
+	insect_iteration = 10
+	scenario_num = 100
 
 	x = 200
 	y = 200
 	step = 10
 	sample_num = 180
 
-	iteration = 50
-	pop_num = 50
+	iteration = 5
+	pop_num = 5
 	test = True
 	insect_fall_machine = 1
 
 
-	eliminated_number = 3*pop_num-40
+	eliminated_number = 3*pop_num-5
 	archive_maximum = 50
 	alpha = 0.8
 

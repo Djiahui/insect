@@ -10,6 +10,7 @@ from surrogate_model.surrogate_model import surrogate_net
 from parameters import Parameters
 import simulator
 from multiprocessing import Pool
+from scipy import stats
 
 class insect(object):
 	def __init__(self, x, y, pos=None, direction=None, rate=None):
@@ -201,6 +202,7 @@ class insect_population(object):
 		predict_num = (int(temp_num)+1) if temp_num else 0
 		# predict_num = int(self.regression_model(input).item())+1
 		to_generate_num = max(0, predict_num - current_num)
+		self.new = to_generate_num
 		self.generate(traps, to_generate_num)
 
 		if not self.populations:
@@ -513,7 +515,7 @@ class populations(object):
 		x,i,insect_population = args
 		# print('the {0}th pop is under evaluating'.format(i))
 
-		in_machine_nums, _, _ = simulator.simulate(x, Parameters.insect_iteration,insect_population)
+		in_machine_nums, _, _,_ = simulator.simulate(x, Parameters.insect_iteration,insect_population)
 		probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in in_machine_nums]
 		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
 
@@ -535,7 +537,7 @@ class populations(object):
 		:param pop: entity.Individual
 		:return:
 		"""
-		in_machine_nums, _,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
+		in_machine_nums, _,_,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
 		probaility = [0 if not x else 1/(2*(1+np.exp(-x))) for x in in_machine_nums]
 
 		cost = [1+Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
@@ -712,8 +714,10 @@ class populations(object):
 
 			pop.asf = max(f_1/w_1,f_2/w_2)
 
-
-
+	def picture(self,times):
+		n = len(self.pops)
+		for i in range(n):
+			simulator.picture_simulate(self.pops[i].x, Parameters.insect_iteration, copy.deepcopy(self.insect_population),times,i)
 
 
 class Archive(object):
@@ -737,7 +741,7 @@ class Archive(object):
 		for r in result:
 			final_result.append(r.get())
 
-		for obj1, obj2, ii,_ in final_result:
+		for obj1, obj2, ii,_ ,_ in final_result:
 			self.pops[ii].objectives = [obj1, obj2]
 
 	def evaluate_modified(self, *args):
@@ -747,7 +751,7 @@ class Archive(object):
 		# the ith pops the jth insects
 		# print('the {0}th pop in archive is under evaluating'.format(i))
 
-		in_machine_nums, _, insects_num = simulator.simulate(x, Parameters.insect_iteration, insect_population)
+		in_machine_nums, _, insects_num,new_names = simulator.simulate(x, Parameters.insect_iteration, insect_population)
 		probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in in_machine_nums]
 		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
 
@@ -760,14 +764,14 @@ class Archive(object):
 		final_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
 		num = x.sum() / ((Parameters.x / Parameters.step + 1) * (Parameters.y / Parameters.step + 1))
 
-		return num, final_loss, i,insects_num
+		return num, final_loss, i,insects_num,new_names
 
 	def evaluate(self, pop):
 		"""
 		:param pop: entity.Individual
 		:return:
 		"""
-		in_machine_nums, _,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
+		in_machine_nums, _,_,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
 		probaility = [0 if not x else 1/(2*(1+np.exp(-x))) for x in in_machine_nums]
 
 		cost = [1+Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
@@ -841,7 +845,8 @@ class Archive(object):
 	def final_process(self):
 
 		insect_pops = []
-		for i in range(Parameters.min_insect_num,Parameters.max_insect_num+1):
+		scenario_num = Parameters.scenario_num
+		for i in range(scenario_num):
 			insect_pops.append(insect_population(13,screen(Parameters.x,Parameters.y,Parameters.step)))
 
 
@@ -857,18 +862,24 @@ class Archive(object):
 		for r in result:
 			finalresult.append(r.get())
 
-		objectives = [[0,0] for _ in range(len(self.pops))]
+		objective1 = [[] for _ in range(len(self.pops))]
+		objective2 = [[] for _ in range(len(self.pops))]
 		insect_num = [[] for _ in range(len(self.pops))]
-
+		new_num = [[] for _ in range(len(self.pops))]
+		print(type(finalresult[0]))
 		for f in finalresult:
-			objectives[f[2]][0] += f[0]
-			objectives[f[2]][1] += f[1]
+			objective1[f[2]].append(f[0])
+			objective2[f[2]].append(f[1])
 			insect_num[f[2]].append(f[3])
-		scenario_num = Parameters.max_insect_num-Parameters.min_insect_num+1
+			new_num[f[2]].append(f[-1])
+
 		for i in range(len(self.pops)):
-			self.pops[i].objectives[0] = objectives[i][0]/scenario_num
-			self.pops[i].objectives[1] = objectives[i][1] / scenario_num
+			mean_1 = self.m_s_i_collect(objective1[i])
+			mean_2 = self.m_s_i_collect(objective2[i])
+			self.pops[i].objectives[0] = mean_1
+			self.pops[i].objectives[1] = mean_2
 			self.pops[i].insect_num = insect_num[i]
+			self.pops[i].new_num = new_num[i]
 
 		self.fast_dominated_sort()
 
@@ -877,18 +888,24 @@ class Archive(object):
 		for pop in self.fronts[0]:
 			for temp in pop.insect_num:
 				plt.plot(range(len(temp)),temp)
-			plt.savefig('png/'+str(count)+'.png')
+			plt.savefig('png/'+str(count)+'insct_num'+'.png')
 			plt.show()
+
+
+			for temp in pop.new_num:
+				plt.plot(range(len(temp)), temp)
+			plt.savefig('png/' + str(count)+'new_generate' + '.png')
+			plt.show()
+
 			count += 1
 
+	def m_s_i_collect(self, l):
+		mean = np.mean(l)
+		std = np.std(l)
+		interval = stats.norm.interval(0.96,mean,std)
 
-
-
-
-
-
-
-
+		print(mean,std,interval[0],interval[1])
+		return mean
 
 
 

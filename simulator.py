@@ -29,20 +29,24 @@ def draw(pops, traps,day_count):
 	plt.xticks(np.arange(0, 200, 10))
 	plt.yticks(np.arange(0, 200, 10))
 	plt.show()
-def draw_new(alive,involved,intrap,traps):
-	alivepos = np.vstack([[x[1],200-x[0]] for x in alive])
-	involvedpos = np.vstack([[x[1], 200 - x[0]] for x in involved])
-	intrappos = np.vstack([[x[1], 200 - x[0]] for x in intrap])
+def draw_new(alive,involved,intrap,traps,times,ith,day_count):
+	if alive:
+		alivepos = np.vstack([[x[1],200-x[0]] for x in alive])
+		plt.scatter(alivepos[:, 0], alivepos[:, 1], c='g',marker='*')
+	if involved:
+		involvedpos = np.vstack([[x[1], 200 - x[0]] for x in involved])
+		plt.scatter(involvedpos[:, 0], involvedpos[:, 1], c='b',marker='x')
+	if intrap:
+		intrappos = np.vstack([[x[1], 200 - x[0]] for x in intrap])
+		plt.scatter(intrappos[:, 0], intrappos[:, 1], c='purple',marker='+')
 	trap_pos = np.vstack(list(map(lambda x: [x.pos[1], 200 - x.pos[0]], traps)))
-
-	plt.scatter(alivepos[:,0],alivepos[:,1],c = 'g')
-	plt.scatter(involvedpos[:, 0], involvedpos[:, 1], c='b')
-	plt.scatter(intrappos[:, 0], intrappos[:, 1], c='purple')
-	plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5)
+	plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5,s = 100)
 
 	plt.grid()
 	plt.xticks(np.arange(0, 210, 10))
 	plt.yticks(np.arange(0, 210, 10))
+	name = 'png/temp/'+ str(ith) + '-' +str(times) +'_' +str(day_count) +'.png'
+	plt.savefig(name)
 	plt.show()
 
 
@@ -72,16 +76,14 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 	day_count = 0
 	in_machine_nums = [0 for _ in range(iteration)]
 	insect_nums = [0 for _ in range(iteration)]
+	new_gene = [0 for _ in range(iteration)]
 
 	for _, temp in temp_data.items():
-		# pops.update(traps, temp)
-
-		insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps, temp)
-
-		draw_new(insect_position_alive,insect_position_involved,insect_position_traps,traps)
+		pops.update(traps, temp)
 
 		in_machine_nums[day_count] = pops.env.in_machine_num
 		insect_nums[day_count] = len(pops.populations)
+		new_gene[day_count] = pops.new
 		pops.env.update()
 
 		if draw_or_not:
@@ -91,6 +93,31 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 		day_count += 1
 		if day_count == iteration:
 			break
+
+	return in_machine_nums,pops.env.in_trap_num,insect_nums,new_gene
+
+def picture_simulate(matrix, iteration, pops,times,ith):
+	traps = trap_generate(matrix, pops.env.x, pops.env.y, pops.env.step)
+	pops.generate(traps)
+	with open('data_from_sim/temperature_data', 'rb') as pkl:
+		temp_data = pickle.load(pkl)
+
+	day_count = 0
+	in_machine_nums = [0 for _ in range(iteration)]
+	insect_nums = [0 for _ in range(iteration)]
+
+	for _, temp in temp_data.items():
+		insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps, temp)
+		draw_new(insect_position_alive,insect_position_involved,insect_position_traps,traps,times,ith,day_count)
+
+		in_machine_nums[day_count] = pops.env.in_machine_num
+		insect_nums[day_count] = len(pops.populations)
+		pops.env.update()
+
+		day_count += 1
+		if day_count == iteration:
+			break
+
 
 	return in_machine_nums,pops.env.in_trap_num,insect_nums
 
@@ -180,7 +207,7 @@ def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 		# one matrix for testing
 
 		new_insect_pops = copy.deepcopy(pops)
-		insects_in_machine,insects_in_trap,insect_nums = simulate(matrix, insect_iteration, new_insect_pops)
+		insects_in_machine,insects_in_trap,insect_nums,new_nums = simulate(matrix, insect_iteration, new_insect_pops)
 		probaility = prob_cal(insects_in_machine)
 
 		n = len(data)
