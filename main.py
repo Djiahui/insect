@@ -152,5 +152,5 @@ def draw_2():
 	plt.show()
 
 if __name__ == '__main__':
-	# optimize(Parameters.pop_num)
+	optimize(Parameters.pop_num)
 	picture()
