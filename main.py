@@ -32,27 +32,29 @@ def picture():
 	with open('new_final_decision','rb') as pkl:
 		temp = pickle.load(pkl)
 	population = entity.populations(len(temp), Parameters.x // Parameters.step + 1, Parameters.y // Parameters.step + 1)
-	insect_pops = entity.insect_population(13, entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	insect_pops = entity.insect_population(100, entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops
 	for pop in temp:
 		population.pops.append(entity.Individual(pop))
 	population.picture(1)
 
 
-	insect_pops2 = entity.insect_population(13,
+	insect_pops2 = entity.insect_population(100,
 										   entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops2
 	population.picture(2)
 
-	insect_pops3 = entity.insect_population(13, entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	insect_pops3 = entity.insect_population(100, entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops3
 	population.picture(3)
 	exit(0)
 
 def optimize(pop_num):
 
+	os.makedirs('png')
+
 	population = entity.populations(pop_num,Parameters.x//Parameters.step+1,Parameters.y//Parameters.step+1)
-	insect_pops = entity.insect_population(13,entity.screen(Parameters.x,Parameters.y,Parameters.step))
+	insect_pops = entity.insect_population(100,entity.screen(Parameters.x,Parameters.y,Parameters.step))
 	population.insect_population = insect_pops
 	population.initial()
 	ideal = [1,1]
@@ -80,7 +82,7 @@ def optimize(pop_num):
 
 		population.update()
 
-		insect_pops = entity.insect_population(13,entity.screen(Parameters.x,Parameters.y,Parameters.step))
+		insect_pops = entity.insect_population(100,entity.screen(Parameters.x,Parameters.y,Parameters.step))
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
 
@@ -93,12 +95,19 @@ def optimize(pop_num):
 	draw_traps(archive)
 
 	print('save the result')
+	os.makedirs('png/result')
 	final_objectives = [x.objectives for x in archive.fronts[0]]
 	final_decision = [x.x for x in archive.fronts[0]]
-	with open('new_final_objectives', 'wb') as pkl:
+	final_std = [x.std for x in archive.fronts[0]]
+	final_interval = [x.interval for x in archive.fronts[0]]
+	with open('png/result/new_final_objectives', 'wb') as pkl:
 		pickle.dump(final_objectives, pkl)
-	with open('new_final_decision','wb') as pkl2:
+	with open('png/result/new_final_decision','wb') as pkl2:
 		pickle.dump(final_decision,pkl2)
+	with open('png/result/new_final_std','wb') as pkl3:
+		pickle.dump(final_std,pkl3)
+	with open('png/result/new_final_interval','wb') as pkl4:
+		pickle.dump(final_interval,pkl4)
 
 
 

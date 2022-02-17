@@ -1,5 +1,6 @@
 import random
 
+import numpy
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
@@ -70,7 +71,7 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 	if draw_or_not:
 		draw(pops, traps,0)
 
-	with open('data_from_sim/temperature_data', 'rb') as pkl:
+	with open('data_from_sim/new_temp_data', 'rb') as pkl:
 		temp_data = pickle.load(pkl)
 
 	day_count = 0
@@ -78,48 +79,155 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 	insect_nums = [0 for _ in range(iteration)]
 	new_gene = [0 for _ in range(iteration)]
 
-	for _, temp in temp_data.items():
-		pops.update(traps, temp)
+	days = []
+	temps = []
+	for day,temp in temp_data.items():
+		days.append(day)
+		temps.append(temp)
 
-		in_machine_nums[day_count] = pops.env.in_machine_num
-		insect_nums[day_count] = len(pops.populations)
-		new_gene[day_count] = pops.new
+	num_days = len(days)
+	season = Parameters.season
+	if not season:
+		while True:
+			random_start = random.randint(0, num_days - 1)
+			day = days[random_start]
+			if random_start+iteration<num_days:
+				break
+	elif season=='s':
+		while True:
+			random_start = random.randint(0, num_days - 1)
+			day = days[random_start]
+			day_split = day.split('/')
+			if day_split[1] in ['1','2','3','4'] and random_start+iteration<num_days:
+				break
+	else:
+		while True:
+			random_start = random.randint(0, num_days - 1)
+			day = days[random_start]
+			day_split = day.split('/')
+			if day_split[1] in ['7', '8', '9', '10'] and day_split[0] != '2021'and random_start+iteration<num_days:
+				break
+
+
+	flag = False
+	for itera in range(random_start,random_start+iteration):
+		pops.update(traps,temps[itera])
+		in_machine_nums[itera-random_start] = pops.env.in_machine_num
+		insect_nums[itera-random_start] = len(pops.populations)
+		new_gene[itera-random_start] = pops.new
 		pops.env.update()
 
-		if draw_or_not:
-			draw(pops, traps,day_count)
-			exit()
+		if Parameters.Treatment:
+			if itera-random_start>10:
+				temp_in_machine =  in_machine_nums[itera-10:itera]
 
-		day_count += 1
-		if day_count == iteration:
-			break
+				probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in temp_in_machine]
+				cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in
+						probaility]
 
-	return in_machine_nums,pops.env.in_trap_num,insect_nums,new_gene
+				for index, pro in enumerate(probaility):
+					if not pro:
+						cost[index] = 0
+
+				temp_loss = sum(cost)
+				# norm
+				temp_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
+
+				if temp_loss>1158:
+					flag = True
+					break
+
+	return in_machine_nums, pops.env.in_trap_num, insect_nums, new_gene,flag
+
+	# for _, temp in temp_data.items():
+	# 	pops.update(traps, temp)
+	#
+	# 	in_machine_nums[day_count] = pops.env.in_machine_num
+	# 	insect_nums[day_count] = len(pops.populations)
+	# 	new_gene[day_count] = pops.new
+	# 	pops.env.update()
+	#
+	# 	if draw_or_not:
+	# 		draw(pops, traps,day_count)
+	# 		exit()
+	#
+	# 	day_count += 1
+	# 	if day_count == iteration:
+	# 		break
+	#
+	# return in_machine_nums,pops.env.in_trap_num,insect_nums,new_gene
 
 def picture_simulate(matrix, iteration, pops,times,ith):
 	traps = trap_generate(matrix, pops.env.x, pops.env.y, pops.env.step)
 	pops.generate(traps)
-	with open('data_from_sim/temperature_data', 'rb') as pkl:
+	with open('data_from_sim/new_temp_data', 'rb') as pkl:
 		temp_data = pickle.load(pkl)
 
 	day_count = 0
 	in_machine_nums = [0 for _ in range(iteration)]
 	insect_nums = [0 for _ in range(iteration)]
+	new_gene = [0 for _ in range(iteration)]
 
-	for _, temp in temp_data.items():
-		insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps, temp)
-		draw_new(insect_position_alive,insect_position_involved,insect_position_traps,traps,times,ith,day_count)
+	days = []
+	temps = []
+	for day,temp in temp_data.items():
+		days.append(day)
+		temps.append(temp)
 
-		in_machine_nums[day_count] = pops.env.in_machine_num
-		insect_nums[day_count] = len(pops.populations)
+	num_days = len(days)
+	season = Parameters.season
+	if not season:
+		while True:
+			random_start = random.randint(0, num_days - 1)
+			day = days[random_start]
+			if random_start+iteration<num_days:
+				break
+	elif season=='s':
+		while True:
+			random_start = random.randint(0, num_days - 1)
+			day = days[random_start]
+			day_split = day.split('/')
+			if day_split[1] in ['1','2','3','4'] and random_start+iteration<num_days:
+				break
+	else:
+		while True:
+			random_start = random.randint(0, num_days - 1)
+			day = days[random_start]
+			day_split = day.split('/')
+			if day_split[1] in ['7', '8', '9', '10'] and day_split[0] != '2021'and random_start+iteration<num_days:
+				break
+	print(random_start,day)
+	for itera in range(random_start,random_start+iteration):
+		insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps,temps[itera])
+		draw_new(insect_position_alive, insect_position_involved, insect_position_traps, traps, times, ith, itera-random_start)
+		in_machine_nums[itera-random_start] = pops.env.in_machine_num
+		insect_nums[itera-random_start] = len(pops.populations)
 		pops.env.update()
+	return in_machine_nums, pops.env.in_trap_num, insect_nums
 
-		day_count += 1
-		if day_count == iteration:
-			break
-
-
-	return in_machine_nums,pops.env.in_trap_num,insect_nums
+	# traps = trap_generate(matrix, pops.env.x, pops.env.y, pops.env.step)
+	# pops.generate(traps)
+	# with open('data_from_sim/new_temp_data', 'rb') as pkl:
+	# 	temp_data = pickle.load(pkl)
+	#
+	# day_count = 0
+	# in_machine_nums = [0 for _ in range(iteration)]
+	# insect_nums = [0 for _ in range(iteration)]
+	#
+	# for _, temp in temp_data.items():
+	# 	insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps, temp)
+	# 	draw_new(insect_position_alive,insect_position_involved,insect_position_traps,traps,times,ith,day_count)
+	#
+	# 	in_machine_nums[day_count] = pops.env.in_machine_num
+	# 	insect_nums[day_count] = len(pops.populations)
+	# 	pops.env.update()
+	#
+	# 	day_count += 1
+	# 	if day_count == iteration:
+	# 		break
+	#
+	#
+	# return in_machine_nums,pops.env.in_trap_num,insect_nums
 
 
 def matrix_generate(x, y, step, test=True):
@@ -207,7 +315,7 @@ def sample_generate(x, y, step, insect_num, sample_num, insect_iteration):
 		# one matrix for testing
 
 		new_insect_pops = copy.deepcopy(pops)
-		insects_in_machine,insects_in_trap,insect_nums,new_nums = simulate(matrix, insect_iteration, new_insect_pops)
+		insects_in_machine,insects_in_trap,insect_nums,new_nums,flag = simulate(matrix, insect_iteration, new_insect_pops)
 		probaility = prob_cal(insects_in_machine)
 
 		n = len(data)
@@ -228,10 +336,10 @@ if __name__ == '__main__':
 	trap_num = 5
 
 	iteration = 20
-	x, y = 100, 100
+	x, y = 200, 200
 	step = 10
 
 	env = entity.screen(x, y, step)
 	pops = entity.insect_population(pop_num, env)
-
-	# simulate(pop_num,matrix,iteration)
+	matrix = numpy.array([[0 for _ in range(21)] for _ in range(21)])
+	simulate(matrix,20,pops)

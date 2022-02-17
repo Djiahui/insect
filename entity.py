@@ -196,7 +196,7 @@ class insect_population(object):
 
 		current_num = len(self.populations)
 
-		input = torch.tensor([current_num] + [sum(temp) / len(temp)])
+		input = torch.tensor([current_num,temp])
 		# input = torch.tensor([current_num] + temp)
 		temp_num = self.regression_model(input).item()
 		predict_num = (int(temp_num)+1) if temp_num else 0
@@ -515,7 +515,7 @@ class populations(object):
 		x,i,insect_population = args
 		# print('the {0}th pop is under evaluating'.format(i))
 
-		in_machine_nums, _, _,_ = simulator.simulate(x, Parameters.insect_iteration,insect_population)
+		in_machine_nums, _, _,_,flag= simulator.simulate(x, Parameters.insect_iteration,insect_population)
 		probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in in_machine_nums]
 		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
 
@@ -524,6 +524,8 @@ class populations(object):
 				cost[index] = 0
 
 		final_loss = sum(cost)
+		if flag:
+			final_loss += 1158
 		# norm
 		final_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
 		num = x.sum()/((Parameters.x/Parameters.step+1)*(Parameters.y/Parameters.step+1))
@@ -537,7 +539,7 @@ class populations(object):
 		:param pop: entity.Individual
 		:return:
 		"""
-		in_machine_nums, _,_,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
+		in_machine_nums, _,_,_,flag = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
 		probaility = [0 if not x else 1/(2*(1+np.exp(-x))) for x in in_machine_nums]
 
 		cost = [1+Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
@@ -547,6 +549,8 @@ class populations(object):
 				cost[index] = 0
 
 		final_loss = sum(cost)
+		if flag:
+			final_loss += 1158
 		#norm
 		final_loss /= (1+Parameters.discount_q)*Parameters.insect_iteration
 
@@ -751,7 +755,7 @@ class Archive(object):
 		# the ith pops the jth insects
 		# print('the {0}th pop in archive is under evaluating'.format(i))
 
-		in_machine_nums, _, insects_num,new_names = simulator.simulate(x, Parameters.insect_iteration, insect_population)
+		in_machine_nums, _, insects_num,new_nums,flag = simulator.simulate(x, Parameters.insect_iteration, insect_population)
 		probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in in_machine_nums]
 		cost = [1 + Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
 
@@ -760,18 +764,20 @@ class Archive(object):
 				cost[index] = 0
 
 		final_loss = sum(cost)
+		if flag:
+			final_loss += 1158
 		# norm
 		final_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
 		num = x.sum() / ((Parameters.x / Parameters.step + 1) * (Parameters.y / Parameters.step + 1))
 
-		return num, final_loss, i,insects_num,new_names
+		return num, final_loss, i,insects_num,new_nums
 
 	def evaluate(self, pop):
 		"""
 		:param pop: entity.Individual
 		:return:
 		"""
-		in_machine_nums, _,_,_ = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
+		in_machine_nums, _,_,_,flag = simulator.simulate(pop.x,Parameters.insect_iteration,copy.deepcopy(self.insect_population))
 		probaility = [0 if not x else 1/(2*(1+np.exp(-x))) for x in in_machine_nums]
 
 		cost = [1+Parameters.discount_q if x > Parameters.threshold else Parameters.discount_p for x in probaility]
@@ -781,6 +787,8 @@ class Archive(object):
 				cost[index] = 0
 
 		final_loss = sum(cost)
+		if flag:
+			final_loss += 1158
 		#norm
 		final_loss /= (1+Parameters.discount_q)*Parameters.insect_iteration
 
@@ -847,7 +855,7 @@ class Archive(object):
 		insect_pops = []
 		scenario_num = Parameters.scenario_num
 		for i in range(scenario_num):
-			insect_pops.append(insect_population(13,screen(Parameters.x,Parameters.y,Parameters.step)))
+			insect_pops.append(insect_population(100,screen(Parameters.x,Parameters.y,Parameters.step)))
 
 
 		pool = Pool(12)
@@ -866,7 +874,7 @@ class Archive(object):
 		objective2 = [[] for _ in range(len(self.pops))]
 		insect_num = [[] for _ in range(len(self.pops))]
 		new_num = [[] for _ in range(len(self.pops))]
-		print(type(finalresult[0]))
+
 		for f in finalresult:
 			objective1[f[2]].append(f[0])
 			objective2[f[2]].append(f[1])
@@ -874,12 +882,14 @@ class Archive(object):
 			new_num[f[2]].append(f[-1])
 
 		for i in range(len(self.pops)):
-			mean_1 = self.m_s_i_collect(objective1[i])
-			mean_2 = self.m_s_i_collect(objective2[i])
+			mean_1,_,_ = self.m_s_i_collect(objective1[i])
+			mean_2,std,interval = self.m_s_i_collect(objective2[i])
 			self.pops[i].objectives[0] = mean_1
 			self.pops[i].objectives[1] = mean_2
 			self.pops[i].insect_num = insect_num[i]
 			self.pops[i].new_num = new_num[i]
+			self.pops[i].std = std
+			self.pops[i].interval = interval
 
 		self.fast_dominated_sort()
 
@@ -905,7 +915,7 @@ class Archive(object):
 		interval = stats.norm.interval(0.96,mean,std)
 
 		print(mean,std,interval[0],interval[1])
-		return mean
+		return mean,std,interval
 
 
 
