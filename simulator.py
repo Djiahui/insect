@@ -196,7 +196,7 @@ def picture_simulate(matrix, iteration, pops,times,ith):
 			day_split = day.split('/')
 			if day_split[1] in ['7', '8', '9', '10'] and day_split[0] != '2021'and random_start+iteration<num_days:
 				break
-	print(random_start,day)
+
 	for itera in range(random_start,random_start+iteration):
 		insect_position_alive,insect_position_involved,insect_position_traps = pops.update(traps,temps[itera])
 		draw_new(insect_position_alive, insect_position_involved, insect_position_traps, traps, times, ith, itera-random_start)

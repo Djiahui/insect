@@ -4,8 +4,8 @@ class Parameters(object):
 	prob_f = 0.55
 	prob_q = 0.5
 
-	insect_num = 13
-	insect_iteration = 10
+	insect_num = 100
+	insect_iteration = 180
 	scenario_num = 100
 
 	x = 200
@@ -13,8 +13,8 @@ class Parameters(object):
 	step = 10
 	sample_num = 180
 
-	iteration = 5
-	pop_num = 5
+	iteration = 50
+	pop_num = 50
 	test = True
 	insect_fall_machine = 1
 
@@ -26,8 +26,8 @@ class Parameters(object):
 	max_insect_num = 100
 	min_insect_num = 13
 
-	season = 'w'
-	Treatment = True
+	season = None
+	Treatment = None
 	@classmethod
 	def get_random_insect_number(self):
 		return random.randint(13,100)

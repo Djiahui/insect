@@ -29,7 +29,7 @@ def picture():
 	# 数量相同 分布不同   时间的影响  数量分布相同，决策不同  决策相同，数量分布都不同
 	print('final picture')
 	os.makedirs('png/temp')
-	with open('new_final_decision','rb') as pkl:
+	with open('png/result/new_final_decision','rb') as pkl:
 		temp = pickle.load(pkl)
 	population = entity.populations(len(temp), Parameters.x // Parameters.step + 1, Parameters.y // Parameters.step + 1)
 	insect_pops = entity.insect_population(100, entity.screen(Parameters.x, Parameters.y, Parameters.step))
@@ -39,12 +39,12 @@ def picture():
 	population.picture(1)
 
 
-	insect_pops2 = entity.insect_population(100,
+	insect_pops2 = entity.insect_population(Parameters.insect_num,
 										   entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops2
 	population.picture(2)
 
-	insect_pops3 = entity.insect_population(100, entity.screen(Parameters.x, Parameters.y, Parameters.step))
+	insect_pops3 = entity.insect_population(Parameters.insect_num, entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops3
 	population.picture(3)
 	exit(0)
@@ -54,7 +54,7 @@ def optimize(pop_num):
 	os.makedirs('png')
 
 	population = entity.populations(pop_num,Parameters.x//Parameters.step+1,Parameters.y//Parameters.step+1)
-	insect_pops = entity.insect_population(100,entity.screen(Parameters.x,Parameters.y,Parameters.step))
+	insect_pops = entity.insect_population(Parameters.insect_num,entity.screen(Parameters.x,Parameters.y,Parameters.step))
 	population.insect_population = insect_pops
 	population.initial()
 	ideal = [1,1]
@@ -82,7 +82,7 @@ def optimize(pop_num):
 
 		population.update()
 
-		insect_pops = entity.insect_population(100,entity.screen(Parameters.x,Parameters.y,Parameters.step))
+		insect_pops = entity.insect_population(Parameters.insect_num,entity.screen(Parameters.x,Parameters.y,Parameters.step))
 		population.insect_population = insect_pops
 		archive.insect_population = insect_pops
 
