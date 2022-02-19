@@ -42,13 +42,15 @@ def draw_new(alive,involved,intrap,traps,times,ith,day_count):
 		plt.scatter(intrappos[:, 0], intrappos[:, 1], c='purple',marker='+')
 	trap_pos = np.vstack(list(map(lambda x: [x.pos[1], 200 - x.pos[0]], traps)))
 	plt.scatter(trap_pos[:, 0], trap_pos[:, 1], c='r', alpha=0.5,s = 100)
-
-	plt.grid()
-	plt.xticks(np.arange(0, 210, 10))
-	plt.yticks(np.arange(0, 210, 10))
-	name = 'png/temp/'+ str(ith) + '-' +str(times) +'_' +str(day_count) +'.png'
-	plt.savefig(name)
-	plt.show()
+	try:
+		plt.grid()
+		plt.xticks(np.arange(0, 210, 10))
+		plt.yticks(np.arange(0, 210, 10))
+		name = 'png/temp/'+ str(ith) + '-' +str(times) +'_' +str(day_count) +'.png'
+		plt.savefig(name)
+		plt.show()
+	except:
+		print(str(ith)+'th'+str(day_count)+'days'+'problem')
 
 
 
