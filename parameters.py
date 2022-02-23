@@ -27,7 +27,7 @@ class Parameters(object):
 	min_insect_num = 13
 
 	season = None
-	Treatment = None
+	Treatment = True
 	@classmethod
 	def get_random_insect_number(self):
 		return random.randint(13,100)
