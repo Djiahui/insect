@@ -1,4 +1,5 @@
 import copy
+import csv
 import os
 import pickle
 import random
@@ -38,12 +39,14 @@ def picture():
 		population.pops.append(entity.Individual(pop))
 	population.picture(1)
 
+	print('second one')
+
 
 	insect_pops2 = entity.insect_population(Parameters.insect_num,
 										   entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops2
 	population.picture(2)
-
+	print('third one')
 	insect_pops3 = entity.insect_population(Parameters.insect_num, entity.screen(Parameters.x, Parameters.y, Parameters.step))
 	population.insect_population = insect_pops3
 	population.picture(3)
@@ -100,6 +103,8 @@ def optimize(pop_num):
 	final_decision = [x.x for x in archive.fronts[0]]
 	final_std = [x.std for x in archive.fronts[0]]
 	final_interval = [x.interval for x in archive.fronts[0]]
+	final_in_machine = [x.in_machine_num for x in  archive.fronts[0]]
+	final_in_trap = [x.in_trap_num for x in archive.fronts[0]]
 	with open('png/result/new_final_objectives', 'wb') as pkl:
 		pickle.dump(final_objectives, pkl)
 	with open('png/result/new_final_decision','wb') as pkl2:
@@ -108,6 +113,11 @@ def optimize(pop_num):
 		pickle.dump(final_std,pkl3)
 	with open('png/result/new_final_interval','wb') as pkl4:
 		pickle.dump(final_interval,pkl4)
+	with open('png/result/in_machine_num','wb') as pkl5:
+		pickle.dump(final_in_machine,pkl5)
+	with open('png/result/in_trap_num','wb') as pkl6:
+		pickle.dump(final_in_trap,pkl6)
+
 
 
 
