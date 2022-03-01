@@ -124,25 +124,37 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 		if Parameters.Treatment:
 			if not ((itera-random_start)+1)%10:
 				print(str(itera-random_start)+'enough')
-				temp_in_machine =  in_machine_nums[:itera]
+				temp_in_machine =  in_machine_nums[itera-random_start]
+				temp_probaility = 0 if not temp_in_machine else 1 / (2 * (1 + np.exp(-temp_in_machine)))
+				if not temp_probaility:
+					cost = 0
+				elif temp_probaility>Parameters.threshold:
+					cost = (1+Parameters.discount_q)*temp_probaility
+				else:
+					cost = Parameters.discount_p*temp_probaility
+				loss = cost*8064
+				if loss>1158:
+					flag = True
+					print('kill')
+					break
 
-				probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in temp_in_machine]
-				cost = [(1 + Parameters.discount_q)*x if x > Parameters.threshold else (Parameters.discount_p*x) for x in
-						probaility]
-
-				for index, pro in enumerate(probaility):
-					if not pro:
-						cost[index] = 0
-
-				temp_loss = sum(cost)*8064
-				print(temp_loss)
+				# probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in temp_in_machine]
+				# cost = [(1 + Parameters.discount_q)*x if x > Parameters.threshold else (Parameters.discount_p*x) for x in
+				# 		probaility]
+				#
+				# for index, pro in enumerate(probaility):
+				# 	if not pro:
+				# 		cost[index] = 0
+				#
+				# temp_loss = sum(cost)*8064
+				# print(temp_loss)
 				# norm
 				# temp_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
 
-				if temp_loss>1158:
-					flag = True
-					print('kill!!!!!!!!!!!!!!!!!!!!!!!')
-					break
+				# if temp_loss>1158:
+				# 	flag = True
+				# 	print('kill!!!!!!!!!!!!!!!!!!!!!!!')
+				# 	break
 
 	return in_machine_nums, in_traps_num, insect_nums, new_gene,flag
 
@@ -212,26 +224,23 @@ def picture_simulate(matrix, iteration, pops,times,ith):
 		pops.env.update()
 
 		if Parameters.Treatment:
-			if not ((itera-random_start)+1)%10:
-				print(str(itera-random_start)+'enough')
-				temp_in_machine =  in_machine_nums[:itera]
+			if Parameters.Treatment:
+				if not ((itera - random_start) + 1) % 10:
+					print(str(itera - random_start) + 'enough')
+					temp_in_machine = in_machine_nums[itera-random_start]
+					temp_probaility = 0 if not temp_in_machine else 1 / (2 * (1 + np.exp(-temp_in_machine)))
+					if not temp_probaility:
+						cost = 0
+					elif temp_probaility > Parameters.threshold:
+						cost = (1 + Parameters.discount_q) * temp_probaility
+					else:
+						cost = Parameters.discount_p * temp_probaility
+					loss = cost * 8064
+					if loss > 1158:
+						print('kill')
+						flag = True
+						break
 
-				probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in temp_in_machine]
-				cost = [(1 + Parameters.discount_q)*x if x > Parameters.threshold else (Parameters.discount_p*x) for x in
-						probaility]
-
-				for index, pro in enumerate(probaility):
-					if not pro:
-						cost[index] = 0
-
-				temp_loss = sum(cost)*8064
-				# norm
-				# temp_loss /= (1 + Parameters.discount_q) * Parameters.insect_iteration
-
-				if temp_loss>1158:
-					flag = True
-					print('kill!!!!!!!!!!!!!!!!!!!!!!!')
-					break
 	return in_machine_nums, pops.env.in_trap_num, insect_nums
 
 	# traps = trap_generate(matrix, pops.env.x, pops.env.y, pops.env.step)

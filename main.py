@@ -30,7 +30,7 @@ def picture():
 	# 数量相同 分布不同   时间的影响  数量分布相同，决策不同  决策相同，数量分布都不同
 	print('final picture')
 	os.makedirs('png/temp')
-	with open('png/result/new_final_decision','rb') as pkl:
+	with open('png/result/final_decision','rb') as pkl:
 		temp = pickle.load(pkl)
 	population = entity.populations(len(temp), Parameters.x // Parameters.step + 1, Parameters.y // Parameters.step + 1)
 	insect_pops = entity.insect_population(100, entity.screen(Parameters.x, Parameters.y, Parameters.step))
@@ -105,18 +105,21 @@ def optimize(pop_num):
 	final_interval = [x.interval for x in archive.fronts[0]]
 	final_in_machine = [x.in_machine_num for x in  archive.fronts[0]]
 	final_in_trap = [x.in_trap_num for x in archive.fronts[0]]
-	with open('png/result/new_final_objectives', 'wb') as pkl:
+	final_flags = [x.flags for x in archive.fronts[0]]
+	with open('png/result/final_objectives', 'wb') as pkl:
 		pickle.dump(final_objectives, pkl)
-	with open('png/result/new_final_decision','wb') as pkl2:
+	with open('png/result/final_decision','wb') as pkl2:
 		pickle.dump(final_decision,pkl2)
-	with open('png/result/new_final_std','wb') as pkl3:
+	with open('png/result/final_std','wb') as pkl3:
 		pickle.dump(final_std,pkl3)
-	with open('png/result/new_final_interval','wb') as pkl4:
+	with open('png/result/final_interval','wb') as pkl4:
 		pickle.dump(final_interval,pkl4)
-	with open('png/result/in_machine_num','wb') as pkl5:
+	with open('png/result/final_in_machine_num','wb') as pkl5:
 		pickle.dump(final_in_machine,pkl5)
-	with open('png/result/in_trap_num','wb') as pkl6:
+	with open('png/result/final_in_trap_num','wb') as pkl6:
 		pickle.dump(final_in_trap,pkl6)
+	with open('png/result/final_flags','wb') as pkl7:
+		pickle.dump(final_flags,pkl7)
 
 
 
