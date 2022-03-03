@@ -123,7 +123,7 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 
 		if Parameters.Treatment:
 			if not ((itera-random_start)+1)%10:
-				print(str(itera-random_start)+'enough')
+
 				temp_in_machine =  in_machine_nums[itera-random_start]
 				temp_probaility = 0 if not temp_in_machine else 1 / (2 * (1 + np.exp(-temp_in_machine)))
 				if not temp_probaility:
@@ -135,7 +135,7 @@ def simulate(matrix, iteration, pops,draw_or_not = False):
 				loss = cost*8064
 				if loss>1158:
 					flag = True
-					print('kill')
+					print(str(itera-random_start)+'enough'+'kill')
 					break
 
 				# probaility = [0 if not x else 1 / (2 * (1 + np.exp(-x))) for x in temp_in_machine]
@@ -226,7 +226,7 @@ def picture_simulate(matrix, iteration, pops,times,ith):
 		if Parameters.Treatment:
 			if Parameters.Treatment:
 				if not ((itera - random_start) + 1) % 10:
-					print(str(itera - random_start) + 'enough')
+
 					temp_in_machine = in_machine_nums[itera-random_start]
 					temp_probaility = 0 if not temp_in_machine else 1 / (2 * (1 + np.exp(-temp_in_machine)))
 					if not temp_probaility:
@@ -237,7 +237,7 @@ def picture_simulate(matrix, iteration, pops,times,ith):
 						cost = Parameters.discount_p * temp_probaility
 					loss = cost * 8064
 					if loss > 1158:
-						print('kill')
+						print(str(itera - random_start) + 'enough'+ 'kill')
 						flag = True
 						break
 
